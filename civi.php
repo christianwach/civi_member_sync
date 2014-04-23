@@ -13,6 +13,12 @@ $MembershipStatusDetials=civicrm_api("MembershipStatus","get", array (version =>
    $MembershipStatus[$values['id']] =$values['name']; 
  }
 
+
+
+/**
+ * Get role/membership names
+ * @return string $current_roles The list of membership names, one per line
+ */
 function get_names($values,$memArray){   
     $memArray = array_flip($memArray); 
     $current_rule =  unserialize($values); 

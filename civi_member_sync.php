@@ -19,6 +19,24 @@ altered to use WP $wpdb class.
 // define version as constant so as not to clutter global namespace
 define( 'TADMS_DB_VERSION', '1.0' );
 
+// store reference to this file
+define( 'TADMS_FILE', __FILE__ );
+
+// store URL to this plugin's directory
+if ( !defined( 'TADMS_URL' ) ) {
+	define( 'TADMS_URL', plugin_dir_url( TADMS_FILE ) );
+}
+// store PATH to this plugin's directory
+if ( !defined( 'TADMS_PATH' ) ) {
+	define( 'TADMS_PATH', plugin_dir_path( TADMS_FILE ) );
+}
+
+
+
+/**
+ * Create MySQL table to track membership sync
+ * @return nothing
+ */
 function tadms_install() {
    global $wpdb;
 
@@ -42,8 +60,12 @@ function tadms_install() {
     
 register_activation_hook(__FILE__,'tadms_install');    
 
-/** function to schedule manual sync daily **/
 
+
+/**
+ * Schedule manual sync daily
+ * @return nothing
+ */
 function civi_member_sync_daily() {
   $users = get_users();
 
@@ -85,7 +107,12 @@ if( !wp_next_scheduled( 'civi_member_sync_refresh' ) ) {
 } 
 add_action( 'civi_member_sync_refresh', 'civi_member_sync_daily' );  
     
-/** function to check user's membership record while login and logout **/   
+
+
+/**
+ * Check user's membership record while login and logout
+ * @return bool true if successful
+ */
 function civi_member_sync_check() {    
     
     global $wpdb;
@@ -127,13 +154,17 @@ function civi_member_sync_check() {
 add_action('wp_login', 'civi_member_sync_check');
 add_action('wp_logout', 'civi_member_sync_check');
 //add_action('profile_update', 'civi_member_sync_check');
-  
-/** function to check membership record and assign wordpress role based on themembership status
-input params
-#CiviCRM contactID 
-#ordpress UserID and 
-#User Role **/
-function member_check($contactID,$currentUserID, $current_user_role) {
+
+
+
+/**
+ * Check membership record and assign WordPress role based on membership status
+ * @param int $contactID The numerical CiviCRM contact ID
+ * @param int $currentUserID The numerical ID of the current user
+ * @param string $current_user_role The role of the current user
+ * @return bool true if successful
+ */
+function member_check( $contactID, $currentUserID, $current_user_role ) {
 
   global $wpdb;
   global $user;
@@ -188,6 +219,12 @@ function member_check($contactID,$currentUserID, $current_user_role) {
 } 
 
 /** function to set setings page for the plugin in menu **/
+
+
+/**
+ * Add this plugin's Settings Page to the WordPress admin menu
+ * @return nothing
+ */
 function setup_civi_member_sync_check_menu() {  
     
     add_submenu_page('CiviMember Role Sync', 'CiviMember Role Sync', 'List of Rules', 'add_users', 'civi_member_sync/settings.php');  
@@ -198,12 +235,23 @@ function setup_civi_member_sync_check_menu() {
 add_action("admin_menu", "setup_civi_member_sync_check_menu"); 
 add_action('admin_init', 'my_plugin_admin_init');
  
-//create the function called by your new action
+
+
+/**
+ * Ensure jQuery and jQuery Form are available in WP admin
+ * @return nothing
+ */
 function my_plugin_admin_init() {
     wp_enqueue_script('jquery');
     wp_enqueue_script('jquery-form');
 }
 
+
+
+/**
+ * Add utility links to WordPress Plugin Listings Page
+ * @return array $links The list of plugin links
+ */
 function plugin_add_settings_link($links) {
 	$settings_link = '<a href="admin.php?page=civi_member_sync/list.php">Settings</a>';
   	array_push( $links, $settings_link );
