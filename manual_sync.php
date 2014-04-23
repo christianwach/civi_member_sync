@@ -44,8 +44,10 @@ if($_GET['action'] == 'confirm') {
                 if(!empty($userData)){
               	  $currentRole = $userData->roles[0];
                 }
+                
                 //checking membership status and assign role
-                $check = member_check($cid,$uid, $currentRole);     
+                global $tad_civi_member_sync;
+                $check = $tad_civi_member_sync->member_check($cid,$uid, $currentRole);     
                 
             }       
          }
