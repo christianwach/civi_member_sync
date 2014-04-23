@@ -13,13 +13,14 @@ Based on CiviMember Role Synchronize by Jag Kandasamy of http://www.orangecreati
 altered to use WP $wpdb class.
 
 */  
-    
-global $tadms_db_version;
-$tadms_db_version = "1.0";
+
+
+
+// define version as constant so as not to clutter global namespace
+define( 'TADMS_DB_VERSION', '1.0' );
 
 function tadms_install() {
    global $wpdb;
-   global $tadms_db_version;
 
    $table_name = $wpdb->prefix . "civi_member_sync";
       
@@ -36,7 +37,7 @@ function tadms_install() {
 
    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
    dbDelta($sql);    
-   add_option("tadms_db_version", $tadms_db_version);    
+   add_option("tadms_db_version", TADMS_DB_VERSION);    
 }    
     
 register_activation_hook(__FILE__,'tadms_install');    
