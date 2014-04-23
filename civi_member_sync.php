@@ -1,17 +1,18 @@
 <?php
- /* 
-    Plugin Name: Tadpole CiviMember Role Synchronize 
-    Depends: CiviCRM
-    Plugin URI: https://tadpole.cc
-    Description: Plugin to syncronize members in CiviCRM with WordPress
-    Author: Jag Kandasamy and Tadpole Collective
-    Version: 1.0
-    Author URI: https://tadpole.cc
+/* 
+Plugin Name: Tadpole CiviMember Role Synchronize 
+Plugin URI: https://tadpole.cc
+Description: Plugin to syncronize members in CiviCRM with WordPress
+Author: Jag Kandasamy and Tadpole Collective
+Version: 1.0
+Author URI: https://tadpole.cc
+Text Domain: civi_member_sync
+Domain Path: /languages
 
-    Based on CiviMember Role Synchronize by Jag Kandasamy of http://www.orangecreative.net.  This has been
-    altered to use WP $wpdb class.
-    
-    */  
+Based on CiviMember Role Synchronize by Jag Kandasamy of http://www.orangecreative.net.  This has been
+altered to use WP $wpdb class.
+
+*/  
     
 global $tadms_db_version;
 $tadms_db_version = "1.0";
