@@ -11,7 +11,7 @@
    </tr> 
   </table> 
 </div>
-<?php } ?>  
+<?php } ?>
 
 
 <?php  
@@ -57,4 +57,4 @@ if($_GET['action'] == 'confirm') {
     <div id="message" class="updated below-h2">
     <span><p> CiviMember Memberships and WordPress Roles have been synchronized using available rules. Note: if no association rules exist then synchronization has not been completed.</p></span>
     </div> 
-<?php } ?>     
+<?php } ?>
