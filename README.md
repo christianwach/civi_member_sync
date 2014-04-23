@@ -3,7 +3,9 @@ CiviCRM Member Role Sync
 
 The *CiviCRM Member Role Sync* plugin allows you to synchronize CiviCRM memberships with WordPress roles. This enables you to have, among other things, members-only content on your website that is only accessible to current members defined by the rules and types you have set up in CiviCRM. 
 
-This plugin is a fork of the [GitHub repo](https://github.com/tadpolecc/civi_member_sync) written by [Tadpole Collective](https://tadpole.cc) and  originally developed by [Jag Kandasamy](http://www.orangecreative.net). The roadmap for development is to make role syncing instantaneous rather than relying on login, logout or cron events happening.
+This plugin is a fork of the [GitHub repo](https://github.com/tadpolecc/civi_member_sync) written by [Tadpole Collective](https://tadpole.cc) and  originally developed by [Jag Kandasamy](http://www.orangecreative.net). 
+
+**Please note:** This plugin may not be functional at present. It is under development at the moment. The roadmap for this development phase is to make role syncing instantaneous rather than relying on login, logout or cron events happening.
 
 ## Installation ##
 
