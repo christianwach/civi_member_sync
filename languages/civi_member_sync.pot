@@ -1,0 +1,48 @@
+# Copyright (C) 2014 Tadpole CiviMember Role Synchronize
+# This file is distributed under the same license as the Tadpole CiviMember Role Synchronize package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Tadpole CiviMember Role Synchronize 1.0\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/civi_member_sync\n"
+"POT-Creation-Date: 2014-04-23 14:22:36+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2014-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: civi_member_sync.php:368 civi_member_sync.php:369 civi_member_sync.php:378
+msgid "CiviMember Role Sync"
+msgstr ""
+
+#: civi_member_sync.php:379 civi_member_sync.php:388
+msgid "List of Rules"
+msgstr ""
+
+#: civi_member_sync.php:387
+msgid "CiviMember Role Manual Sync"
+msgstr ""
+
+#: civi_member_sync.php:439
+msgid "Settings"
+msgstr ""
+#. Plugin Name of the plugin/theme
+msgid "Tadpole CiviMember Role Synchronize"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://tadpole.cc"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Plugin to syncronize members in CiviCRM with WordPress"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Jag Kandasamy and Tadpole Collective"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://tadpole.cc"
+msgstr ""
