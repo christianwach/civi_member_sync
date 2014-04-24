@@ -30,7 +30,7 @@ $select = $wpdb->get_results( " SELECT * FROM $table_name "); ?>
  <tbody class="list:civimember-role-sync" id="the-list">
  <?php foreach ($select as $key => $value){?>
  <tr>   
-  <td><?php  echo tadms_get_names($value->civi_mem_type, $MembershipType);  ?>
+  <td><?php  echo civimembersync_get_names($value->civi_mem_type, $MembershipType);  ?>
   <br />
   <?php $edit_url = get_bloginfo('url')."/wp-admin/admin.php?&q=edit&id=".$value->id."&page=civi_member_sync/settings.php";  ?>
   <?php $delete_url = get_bloginfo('url')."/wp-admin/admin.php?&q=delete&id=".$value->id."&page=civi_member_sync/list.php";  ?>
@@ -41,8 +41,8 @@ $select = $wpdb->get_results( " SELECT * FROM $table_name "); ?>
   </div>
   </td>
   <td><?php echo $value->wp_role; ?></td>   
-  <td><?php echo tadms_get_names($value->current_rule, $MembershipStatus); ?></td>
-  <td><?php echo tadms_get_names($value->expiry_rule, $MembershipStatus);?></td>
+  <td><?php echo civimembersync_get_names($value->current_rule, $MembershipStatus); ?></td>
+  <td><?php echo civimembersync_get_names($value->expiry_rule, $MembershipStatus);?></td>
   <td><?php echo $value->expire_wp_role;  	?></td>
   </tr> 
   <?php } ?>

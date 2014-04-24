@@ -41,7 +41,7 @@ if ( !defined( 'CIVI_MEMBER_SYNC_PLUGIN_PATH' ) ) {
 /**
  * Class for encapsulating plugin functionality
  */
-class Tad_Civi_Member_Sync {
+class Civi_Member_Sync {
 
 	/** 
 	 * Properties
@@ -420,13 +420,13 @@ class Tad_Civi_Member_Sync {
 
 
 // declare as global for external reference
-global $tad_civi_member_sync;
+global $civi_member_sync;
 
 // init plugin
-$tad_civi_member_sync = new Tad_Civi_Member_Sync;
+$civi_member_sync = new Civi_Member_Sync;
 
 // plugin activation
-register_activation_hook( __FILE__, array( $tad_civi_member_sync, 'install_db' ) );    
+register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );    
 
 // uninstall uses the 'uninstall.php' method
 // see: http://codex.wordpress.org/Function_Reference/register_uninstall_hook

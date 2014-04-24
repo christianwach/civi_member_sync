@@ -46,8 +46,8 @@ if($_GET['action'] == 'confirm') {
                 }
                 
                 //checking membership status and assign role
-                global $tad_civi_member_sync;
-                $check = $tad_civi_member_sync->member_check($cid,$uid, $currentRole);     
+                global $civi_member_sync;
+                $check = $civi_member_sync->member_check($cid,$uid, $currentRole);     
                 
             }       
          }
