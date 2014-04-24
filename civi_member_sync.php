@@ -1,35 +1,39 @@
-<?php
-/* 
-Plugin Name: Tadpole CiviMember Role Synchronize
-Plugin URI: https://tadpole.cc
-Description: Plugin to syncronize members in CiviCRM with WordPress
-Author: Jag Kandasamy and Tadpole Collective
+<?php /* 
+--------------------------------------------------------------------------------
+Plugin Name: CiviCRM Member Role Sync
+Plugin URI: https://github.com/christianwach/civi_member_sync
+Description: Synchronize CiviCRM memberships with WordPress user roles
+Author: Christian Wach
 Version: 1.0
-Author URI: https://tadpole.cc
+Author URI: https://haystack.co.uk
 Text Domain: civi_member_sync
 Domain Path: /languages
+--------------------------------------------------------------------------------
 
-Based on CiviMember Role Synchronize by Jag Kandasamy of http://www.orangecreative.net
-This has been altered to use WP $wpdb class.
-Refactored by Christian Wach <needle@haystack.co.uk>
+Based heavily on:
+1. CiviMember Role Synchronize by Jag Kandasamy of http://www.orangecreative.net
+2. Tadpole CiviMember Role Synchronize by https://tadpole.cc
 
+Refactored, rewritten and extended by Christian Wach <needle@haystack.co.uk>
+
+--------------------------------------------------------------------------------
 */  
 
 
 
 // define version as constant so as not to clutter global namespace
-define( 'TADMS_DB_VERSION', '1.0' );
+define( 'CIVI_MEMBER_SYNC_DB_VERSION', '1.0' );
 
 // store reference to this file
-define( 'TADMS_PLUGIN_FILE', __FILE__ );
+define( 'CIVI_MEMBER_SYNC_PLUGIN_FILE', __FILE__ );
 
 // store URL to this plugin's directory
-if ( !defined( 'TADMS_PLUGIN_URL' ) ) {
-	define( 'TADMS_PLUGIN_URL', plugin_dir_url( TADMS_PLUGIN_FILE ) );
+if ( !defined( 'CIVI_MEMBER_SYNC_PLUGIN_URL' ) ) {
+	define( 'CIVI_MEMBER_SYNC_PLUGIN_URL', plugin_dir_url( CIVI_MEMBER_SYNC_PLUGIN_FILE ) );
 }
 // store PATH to this plugin's directory
-if ( !defined( 'TADMS_PLUGIN_PATH' ) ) {
-	define( 'TADMS_PLUGIN_PATH', plugin_dir_path( TADMS_PLUGIN_FILE ) );
+if ( !defined( 'CIVI_MEMBER_SYNC_PLUGIN_PATH' ) ) {
+	define( 'CIVI_MEMBER_SYNC_PLUGIN_PATH', plugin_dir_path( CIVI_MEMBER_SYNC_PLUGIN_FILE ) );
 }
 
 
@@ -85,7 +89,7 @@ class Tad_Civi_Member_Sync {
 				false,
 				
 				// relative path to directory containing translation files
-				dirname( plugin_basename( TADMS_PLUGIN_FILE ) ) . '/languages/'
+				dirname( plugin_basename( CIVI_MEMBER_SYNC_PLUGIN_FILE ) ) . '/languages/'
 	
 			);
 			
@@ -127,7 +131,7 @@ class Tad_Civi_Member_Sync {
 		// do we care whether we're successful?
 		
 		// store version for later reference
-		add_option( 'tadms_db_version', TADMS_DB_VERSION );
+		add_option( 'civimembersync_db_version', CIVI_MEMBER_SYNC_DB_VERSION );
 	
 	}
 	
@@ -435,7 +439,7 @@ register_activation_hook( __FILE__, array( $tad_civi_member_sync, 'install_db' )
  * Add utility links to WordPress Plugin Listings Page
  * @return array $links The list of plugin links
  */
-function tadms_plugin_add_settings_link( $links ) {
+function civimembersync_plugin_add_settings_link( $links ) {
 	$settings_link = '<a href="admin.php?page=civi_member_sync/list.php">'.__( 'Settings', 'civi_member_sync' ).'</a>';
   	array_push( $links, $settings_link );
   	return $links;
@@ -443,7 +447,7 @@ function tadms_plugin_add_settings_link( $links ) {
 
 // contstriuct filter
 $plugin = plugin_basename( __FILE__ );
-add_filter( "plugin_action_links_$plugin", 'tadms_plugin_add_settings_link' );
+add_filter( "plugin_action_links_$plugin", 'civimembersync_plugin_add_settings_link' );
 
 
 

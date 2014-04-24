@@ -1,6 +1,6 @@
 <?php /* 
 --------------------------------------------------------------------------------
-Tadpole CiviMember Role Synchronize Uninstaller
+CiviCRM Member Role Sync Uninstaller
 --------------------------------------------------------------------------------
 */
 
@@ -15,7 +15,7 @@ if ( !defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit(); }
  * Restore Wordpress database schema
  * @return boolean $result
  */
-function tadms_delete_table() {
+function civimembersync_delete_table() {
 	
 	// access database object
 	global $wpdb;
@@ -39,17 +39,17 @@ function tadms_delete_table() {
 
 
 // delete standalone options
-delete_option( 'tadms_db_version' );
+delete_option( 'civimembersync_db_version' );
 
 // remove database table
-$success = tadms_delete_table();
+$success = civimembersync_delete_table();
 // do we care about the result?
 
 // are we deleting in multisite?
 if ( is_multisite() ) {
 
 	// delete multisite options
-	//delete_site_option( 'tadms_db_version );
+	//delete_site_option( 'civimembersync_db_version );
 	
 }
 
