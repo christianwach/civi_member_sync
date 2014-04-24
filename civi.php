@@ -19,7 +19,7 @@ $MembershipStatusDetials=civicrm_api("MembershipStatus","get", array (version =>
  * Get role/membership names
  * @return string $current_roles The list of membership names, one per line
  */
-function civimembersync_get_names($values,$memArray){   
+function civi_member_sync_get_names($values,$memArray){   
     $memArray = array_flip($memArray); 
     $current_rule =  unserialize($values); 
     if(empty($current_rule)) {

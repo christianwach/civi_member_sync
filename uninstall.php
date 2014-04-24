@@ -15,7 +15,7 @@ if ( !defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit(); }
  * Restore Wordpress database schema
  * @return boolean $result
  */
-function civimembersync_delete_table() {
+function civi_member_sync_delete_table() {
 	
 	// access database object
 	global $wpdb;
@@ -39,17 +39,17 @@ function civimembersync_delete_table() {
 
 
 // delete standalone options
-delete_option( 'civimembersync_db_version' );
+delete_option( 'civi_member_sync_db_version' );
 
 // remove database table
-$success = civimembersync_delete_table();
+$success = civi_member_sync_delete_table();
 // do we care about the result?
 
 // are we deleting in multisite?
 if ( is_multisite() ) {
 
 	// delete multisite options
-	//delete_site_option( 'civimembersync_db_version );
+	//delete_site_option( 'civi_member_sync_db_version );
 	
 }
 

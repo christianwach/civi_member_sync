@@ -131,7 +131,7 @@ class Civi_Member_Sync {
 		// do we care whether we're successful?
 		
 		// store version for later reference
-		add_option( 'civimembersync_db_version', CIVI_MEMBER_SYNC_DB_VERSION );
+		add_option( 'civi_member_sync_db_version', CIVI_MEMBER_SYNC_DB_VERSION );
 	
 	}
 	
@@ -439,7 +439,7 @@ register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );
  * Add utility links to WordPress Plugin Listings Page
  * @return array $links The list of plugin links
  */
-function civimembersync_plugin_add_settings_link( $links ) {
+function civi_member_sync_plugin_add_settings_link( $links ) {
 	$settings_link = '<a href="admin.php?page=civi_member_sync/list.php">'.__( 'Settings', 'civi_member_sync' ).'</a>';
   	array_push( $links, $settings_link );
   	return $links;
@@ -447,7 +447,7 @@ function civimembersync_plugin_add_settings_link( $links ) {
 
 // contstriuct filter
 $plugin = plugin_basename( __FILE__ );
-add_filter( "plugin_action_links_$plugin", 'civimembersync_plugin_add_settings_link' );
+add_filter( "plugin_action_links_$plugin", 'civi_member_sync_plugin_add_settings_link' );
 
 
 
