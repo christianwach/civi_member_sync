@@ -4,7 +4,7 @@ Plugin Name: CiviCRM Member Role Sync
 Plugin URI: https://github.com/christianwach/civi_member_sync
 Description: Synchronize CiviCRM memberships with WordPress user roles
 Author: Christian Wach
-Version: 1.0
+Version: 1.1
 Author URI: https://haystack.co.uk
 Text Domain: civi_member_sync
 Domain Path: /languages
@@ -21,7 +21,10 @@ Refactored, rewritten and extended by Christian Wach <needle@haystack.co.uk>
 
 
 
-// define version as constant so as not to clutter global namespace
+// define plugin version (bump this to refresh CSS and JS)
+define( 'CIVI_MEMBER_SYNC_VERSION', '1.1' );
+
+// define DB table version
 define( 'CIVI_MEMBER_SYNC_DB_VERSION', '1.0' );
 
 // store reference to this file
@@ -47,8 +50,10 @@ class Civi_Member_Sync {
 	 * Properties
 	 */
 	
-	// options page
-	public $options_page;
+	// admin pages
+	public $list_page;
+	public $rules_page;
+	public $sync_page;
 	
 	
 	
@@ -160,9 +165,6 @@ class Civi_Member_Sync {
 		// add menu items
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) ); 
 		
-		// add jQuery to WP admin (almost certainly not necessary)
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
-		
 	}
 	
 	
@@ -171,7 +173,7 @@ class Civi_Member_Sync {
 	* Schedule manual sync daily
 	* @return nothing
 	*/
-	function sync_daily() {
+	public function sync_daily() {
 
 		$users = get_users();
 
@@ -226,7 +228,7 @@ class Civi_Member_Sync {
 	 * Check user's membership record during login and logout
 	 * @return bool true if successful
 	 */
-	function sync_check( $user_login, $user ) {    
+	public function sync_check( $user_login, $user ) {    
 
 		global $wpdb, $current_user;
 		
@@ -283,7 +285,7 @@ class Civi_Member_Sync {
 	 * @param string $current_user_role The role of the current user
 	 * @return bool true if successful
 	 */
-	function member_check( $contactID, $currentUserID, $current_user_role ) {
+	public function member_check( $contactID, $currentUserID, $current_user_role ) {
 		
 		// access globals
 		global $wpdb, $user, $current_user;
@@ -365,50 +367,384 @@ class Civi_Member_Sync {
 	 * Add this plugin's Settings Page to the WordPress admin menu
 	 * @return nothing
 	 */
-	function admin_menu() {
+	public function admin_menu() {
 		
-		// add options page
-		$this->options_page = add_options_page(
-			__( 'CiviMember Role Sync', 'civi_member_sync' ), // page title
-			__( 'CiviMember Role Sync', 'civi_member_sync' ), // menu title
-			'manage_options', // required caps
-			'civi_member_sync/list.php', // slug name
-			null // callback
+		// check user permissions
+		if ( current_user_can('manage_options') ) {
+
+			// try and update options
+			$saved = $this->options_update();
+			
+			// add options page
+			$this->list_page = add_options_page(
+				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // page title
+				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // menu title
+				'manage_options', // required caps
+				'civi_member_sync_list', // slug name
+				array( $this, 'admin_list' ) // callback
+			);
+		
+			//  add first sub item
+			$this->rules_page = add_submenu_page(
+				'civi_member_sync_list', // parent slug
+				__( 'CiviCRM Member Role Sync: Association Rules', 'civi_member_sync' ), // page title
+				__( 'Association Rules', 'civi_member_sync' ), // menu title
+				'manage_options', // required caps
+				'civi_member_sync_rules', // slug name
+				array( $this, 'admin_rules' ) // callback
+			);
+		
+			//  add second sub item
+			$this->sync_page = add_submenu_page(
+				'civi_member_sync_list', // parent slug
+				__( 'CiviCRM Member Role Sync: Manual Sync', 'civi_member_sync' ), // page title
+				__( 'Manual Sync', 'civi_member_sync' ), // menu title
+				'manage_options', // required caps
+				'civi_member_sync_manual_sync', // slug name
+				array( $this, 'admin_sync' ) // callback
+			);
+		
+			// add scripts and styles
+			add_action( 'admin_print_scripts-'.$this->list_page, array( $this, 'admin_js' ) );
+			add_action( 'admin_print_styles-'.$this->list_page, array( $this, 'admin_css' ) );
+			add_action( 'admin_head-'.$this->list_page, array( $this, 'admin_head' ), 50 );
+			add_action( 'admin_print_scripts-'.$this->rules_page, array( $this, 'admin_js' ) );
+			add_action( 'admin_print_styles-'.$this->rules_page, array( $this, 'admin_css' ) );
+			add_action( 'admin_head-'.$this->rules_page, array( $this, 'admin_head' ), 50 );
+			add_action( 'admin_print_scripts-'.$this->sync_page, array( $this, 'admin_js' ) );
+			add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
+			add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
+
+		}
+		
+	}
+	
+	
+	
+	/** 
+	 * Show civi_member_sync_list admin page
+	 * @return nothing
+	 */
+	public function admin_list() {
+		
+		// include file
+		include( 'list.php' );
+		
+	}
+	
+	
+		
+	/** 
+	 * Show civi_member_sync_rules admin page
+	 * @return nothing
+	 */
+	public function admin_rules() {
+	
+		// include file
+		include( 'rules.php' );
+		
+	}
+	
+	
+		
+	/** 
+	 * Show civi_member_sync_manual_sync admin page
+	 * @return nothing
+	 */
+	public function admin_sync() {
+		
+		// include file
+		include( 'manual_sync.php' );
+		
+	}
+	
+	
+		
+	/** 
+	 * Initialise plugin help
+	 * @return nothing
+	 */
+	public function admin_head() {
+		
+		// there's a new screen object for help in 3.3
+		$screen = get_current_screen();
+		//print_r( $screen ); die();
+		
+		// use method in this class
+		$this->admin_help( $screen );
+		
+	}
+	
+	
+		
+	/** 
+	 * Enqueue plugin options page css
+	 */
+	public function admin_css() {
+		
+		// add admin stylesheet
+		wp_enqueue_style(
+		
+			'civi_member_sync_admin_css', 
+			plugins_url( 'assets/css/civi_member_sync.css', CIVI_MEMBER_SYNC_PLUGIN_FILE ),
+			false,
+			CIVI_MEMBER_SYNC_VERSION, // version
+			'all' // media
+			
 		);
 		
-		//  add first sub item
-		add_submenu_page(
-			'civi_member_sync/list.php', // parent slug
-			__( 'CiviMember Role Sync', 'civi_member_sync' ), // page title
-			__( 'List of Rules', 'civi_member_sync' ), // menu title
-			'add_users', // required caps
-			'civi_member_sync/settings.php' // slug name
+	}
+	
+	
+	
+	/** 
+	 * Ensure jQuery and jQuery Form are available in WP admin
+	 * @return nothing
+	 */
+	public function admin_js() {
+		
+		// add javascript plus dependencies
+		wp_enqueue_script(
+		
+			'civi_member_sync_admin_js', 
+			plugins_url( 'assets/js/civi_member_sync.js', CIVI_MEMBER_SYNC_PLUGIN_FILE ),
+			array( 'jquery', 'jquery-form' ),
+			CIVI_MEMBER_SYNC_VERSION // version
+		
 		);
 		
-		//  add second sub item
-		add_submenu_page(
-			'civi_member_sync/list.php', // parent slug
-			__( 'CiviMember Role Manual Sync', 'civi_member_sync' ), // page title
-			__( 'List of Rules', 'civi_member_sync' ), // menu title
-			'add_users', // required caps
-			'civi_member_sync/manual_sync.php' // slug name
-		);
+	}
+
+
+
+	/** 
+	 * @description: adds help copy to admin page in WP3.3+
+	 * @todo: 
+	 *
+	 */
+	public function admin_help( $screen ) {
+	
+		//print_r( $screen ); die();
+		
+		// kick out if not our screen
+		if ( $screen->id != $this->list_page ) return;
+		
+		// add a tab - we can add more later
+		$screen->add_help_tab( array(
+		
+			'id'      => 'civi_member_sync',
+			'title'   => __( 'CiviCRM Member Role Sync', 'civi_member_sync' ),
+			'content' => $this->get_help(),
+			
+		));
+		
+		// --<
+		return $screen;
+
+	}
+	
+	
+	
+	/** 
+	 * Get help text
+	 * @return string $help Help formatted as HTML
+	 */
+	public function get_help() {
+		
+		// stub help text, to be developed further...
+		$help = '<p>' . __( 'For further information about using CiviCRM Member Role Sync, please refer to the README.md that comes with this plugin.', 'civi_member_sync' ) . '</p>';
+		
+		// --<
+		return $help;
+
+	}
+	
+	
+	
+	/** 
+	 * Save the settings set by the administrator
+	 * @return bool $result Success or failure
+	 */
+	public function options_update() {
+	
+		// init result
+		$result = false;
+		
+	 	// was the form submitted?
+		if( isset( $_POST[ 'civi_member_sync_submit' ] ) ) {
+			
+			// check that we trust the source of the data
+			check_admin_referer( 'civi_member_sync_admin_action', 'civi_member_sync_nonce' );
+			
+			if( !empty( $_POST['wp_role'] ) ) {
+				$wp_role = $_POST['wp_role'];
+			}
+			
+			if ( !empty( $_POST['civi_member_type'] ) ) {
+				$civi_member_type = $_POST['civi_member_type'];
+			}
+			
+			if ( !empty( $_POST['expire_assign_wp_role'] ) ) {
+				$expired_wp_role = $_POST['expire_assign_wp_role'];
+			}
+			
+			if ( !empty( $_POST['current'] ) ) {
+				$sameType = '';
+				foreach( $_POST['current'] AS $key => $value ) {
+					if ( !empty( $_POST['expire'] ) ) {
+						$sameType .= array_search( $key, $_POST['expire'] );
+					}
+				}   
+				$current_rule = serialize( $_POST['current'] );   
+			} else {
+				$errors[] = "Current Status field is required.";
+			}
+			
+			if ( !empty( $_POST['expire'] ) ) {   
+				$expiry_rule = serialize( $_POST['expire'] ); 
+			} else {
+				$errors[] = "Expiry Status field is required.";
+			}
+			
+			if ( empty( $sameType ) AND empty( $errors ) ) {
+				
+				/*
+				$table_name = $wpdb->prefix . "civi_member_sync";    
+				$insert = $wpdb->get_results( 
+					"REPLACE INTO $table_name ".
+					"SET `wp_role` = '$wp_role', ".
+					"`civi_mem_type` = '$civi_member_type', ".
+					"`current_rule` = '$current_rule', ".
+					"`expiry_rule` = '$expiry_rule', ".
+					"`expire_wp_role` = '$expired_wp_role'"
+				);
+				
+				$location = get_bloginfo('url')."/wp-admin/options-general.php?page=civi_member_sync/list.php";
+				echo "<meta http-equiv='refresh' content='0;url=$location' />";
+				exit;
+				*/
+				
+			} else {
+			
+				if ( !empty( $sameType ) ) {  
+					$errors[] = "You can not have the same Status Rule registered as both \"Current\" and \"Expired\".";
+				}
+				
+				?><span class="error" style="color: #FF0000;"><?php 
+					foreach ($errors AS $key => $values ) {
+						echo $values."<br>";
+					} 
+				?></span><?php
+				
+			}
+
+		}
+		
+			if ( isset( $_GET['q'] ) AND $_GET['q'] == 'delete' ) {
+				if ( !empty( $_GET['id'] ) ) {
+
+					// contruct table name
+					$table_name = $wpdb->prefix . 'civi_member_sync';
+					
+					// noooo, redo this
+					$delete = $wpdb->get_results( "DELETE FROM $table_name WHERE `id` = ".$_GET['id'] );        
+
+				}
+			}
+			
+		// --<
+		return $result;
 		
 	}
 	
 	
 	
 	/**
-	 * Ensure jQuery and jQuery Form are available in WP admin
-	 * @return nothing
+	 * Get membership types
+	 * @return array $membership_type List of types, key is ID, value is name
 	 */
-	function admin_init() {
+	public function get_types() {
 		
-		// this can't be necessary!
-		wp_enqueue_script('jquery');
-		wp_enqueue_script('jquery-form');
+		// init return
+		$membership_type = array();
+
+		// init CiviCRM
+		civicrm_wp_initialize();
+
+		$membership_type_details = civicrm_api( 'MembershipType', 'get', array(
+			'version' => '3',
+			'sequential' => '1',
+		));
+
+		foreach( $membership_type_details['values'] AS $key => $values ) {
+			$membership_type[$values['id']] = $values['name']; 
+		}
 		
-	}
+		// --<
+		return $membership_type;
+
+	}  
+
+
+
+	/**
+	 * Get membership statuses
+	 * @return array $membership_status List of statuses, key is ID, value is name
+	 */
+	public function get_statuses() {
+	
+		// init return
+		$membership_status = array();
+
+		// init CiviCRM
+		civicrm_wp_initialize();
+
+		$membership_status_details = civicrm_api( 'MembershipStatus', 'get', array(
+			'version' => '3',
+			'sequential' => '1',
+		));
+
+		foreach( $membership_status_details['values'] AS $key => $values ) {
+			$membership_status[$values['id']] = $values['name']; 
+		}
+		
+		// --<
+		return $membership_status;
+
+	}  
+
+
+
+	/**
+	 * Get role/membership names
+	 * @return string $current_roles The list of membership names, one per line
+	 */
+	public function get_names( $values, $memArray ) {  
+	 
+		$memArray = array_flip( $memArray );
+		
+		// init current rule
+		$current_rule =  unserialize($values);
+		if ( empty( $current_rule ) ) {
+			$current_rule = $values; 
+		}
+		
+		// init current roles
+		$current_roles = ''; 
+		if ( !empty( $current_rule ) ) { 
+			if ( is_array( $current_rule ) ) {    
+				foreach( $current_rule as $ckey => $cvalue ) {
+					$current_roles .= array_search( $ckey, $memArray ) . '<br>';
+				}
+			}else{
+				$current_roles = array_search( $current_rule, $memArray ) . '<br>';
+			}    
+		}
+		
+		// --<
+		return $current_roles;
+		
+	}  
 
 
 

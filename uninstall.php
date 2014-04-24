@@ -12,7 +12,7 @@ if ( !defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit(); }
 
 
 /** 
- * Restore Wordpress database schema
+ * Restore WordPress database schema
  * @return boolean $result
  */
 function civi_member_sync_delete_table() {
