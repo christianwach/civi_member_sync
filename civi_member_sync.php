@@ -411,6 +411,10 @@ class Civi_Member_Sync {
 			$membership_type = $this->civi->get_types();
 			$membership_status = $this->civi->get_statuses();
 			
+			// get admin page URLs
+			$list_url = menu_page_url( 'civi_member_sync_list', false );
+			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+
 			// do we want to populate the form?
 			if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
 				if ( isset( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
@@ -451,6 +455,10 @@ class Civi_Member_Sync {
 		
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
+
+			// get admin page URLs
+			$list_url = menu_page_url( 'civi_member_sync_list', false );
+			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
 
 			// include template file
 			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'manual_sync.php' );

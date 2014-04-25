@@ -2,7 +2,7 @@
 
 <div class="wrap">
 
-<h2><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></h2>
+<h2><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?> <a class="add-new-h2" href="<?php echo $list_url; ?>"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a class="add-new-h2" href="<?php echo $rules_url; ?>"><?php _e( 'Add Association Rule', 'civi_member_sync' ); ?></a></h2>
 
 <?php 
 

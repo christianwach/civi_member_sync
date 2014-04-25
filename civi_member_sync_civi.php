@@ -55,18 +55,20 @@ class Civi_Member_Sync_CiviCRM {
 	 */
 	public function initialise() {
 	
-		// add schedule, if not already present
+		// add schedule, if not already present (to be removed)
 		if ( !wp_next_scheduled( 'civi_member_sync_refresh' ) ) {  
 		   wp_schedule_event( time(), 'daily', 'civi_member_sync_refresh' );
 		}
 
-		// add cron action
+		// add cron action (to be removed)
 		add_action( 'civi_member_sync_refresh', array( $this, 'sync_daily' ) );
 		
-		// add login/logout check
+		// add login/logout check (to be removed)
 		add_action( 'wp_login', array( $this, 'sync_check' ), 10, 2 );
 		add_action( 'wp_logout', array( $this, 'sync_check' ), 10, 2 );
 		//add_action( 'profile_update', array( $this, 'sync_check' ), 10, 2 );
+		
+		// add in CiviCRM hooks, if they exist...
 		
 	}
 	
@@ -83,24 +85,30 @@ class Civi_Member_Sync_CiviCRM {
 
 		// kick out if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return;
-
-		require_once( 'civi.php' );
-		require_once( 'CRM/Core/BAO/UFMatch.php' );
-
-		$users = get_users();
-
-		foreach( $users AS $user ) {
 		
+		// make sure Civi file is included
+		require_once( 'CRM/Core/BAO/UFMatch.php' );
+		
+		// get all WordPress users
+		$users = get_users();
+		
+		// loop through all users (surely not!)
+		foreach( $users AS $user ) {
+			
+			// sanity check
 			$uid = $user->ID;
 			if ( empty( $uid ) ) {
 				continue;
 			}
-			        
+			
+			// get Civi contact
 			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = '$uid'";
 			$contact = CRM_Core_DAO::executeQuery( $sql );
-
-			if ( $contact->fetch() ) {
 			
+			// did we get one?
+			if ( $contact->fetch() ) {
+				
+				// get membership details for this contact
 				$cid = $contact->contact_id;
 				$memDetails = civicrm_api( 'Membership', 'get', array(
 					'version' => '3',
@@ -110,19 +118,21 @@ class Civi_Member_Sync_CiviCRM {
 					'contact_id' => $cid
 				));
 				
+				// if we get membership details
 				if ( !empty( $memDetails['values'] ) ) {
-					foreach( $memDetails['values'] as $key => $value ) {
+					foreach( $memDetails['values'] AS $key => $value ) {
 						$memStatusID = $value['status_id']; 
 						$membershipTypeID = $value['membership_type_id'];  
 					}
 				}
-
+				
+				// get WordPress role
 				$userData = get_userdata( $uid );
 				if ( !empty( $userData ) ) {
 					$currentRole = $userData->roles[0];
 				}
 				
-				// checking membership status and assign role
+				// check membership status and assign role
 				$check = $this->member_check( $cid, $uid, $currentRole );     
 
 			}
@@ -144,26 +154,28 @@ class Civi_Member_Sync_CiviCRM {
 
 		// kick out if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return;
-
+		
+		// access globals
 		global $wpdb, $current_user;
 		
-		// get username in post while login  
+		// get username in post while login (not needed now we're using the hook properly)
 		if ( !empty( $_POST['log'] ) ) {
-			$username = $_POST['log']; 
+			$username = $_POST['log'];
 			$userDetails = $wpdb->get_results( "SELECT * FROM $wpdb->users WHERE user_login = '$username'" );
 			$currentUserID = $userDetails[0]->ID;
 		} else {
 			$currentUserID = $current_user->ID;
 		}
 		
-		//getting current logged in user's role
+		// get current logged in user's role
 		$current_user_role = new WP_User( $currentUserID );
 		$current_user_role = $current_user_role->roles[0];
 		//echo $current_user_role . "\n";
-
-		//getting user's civi contact id and checkmembership details
+		
+		// if not admin (better to use is_super_admin() function)
 		if ( $current_user_role != 'administrator' ) {
 		
+			// get user's civi contact id and check membership details
 			require_once 'CRM/Core/Config.php';
 			$config = CRM_Core_Config::singleton();
 			
@@ -475,23 +487,35 @@ class Civi_Member_Sync_CiviCRM {
 		// check that we trust the source of the request
 		check_admin_referer( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' );
 		
-		$users = get_users();
-
-		require_once('civi.php');
+		// trace
+		print_r( $_POST ); die();
+		
+		// kick out if no CiviCRM
+		if ( ! civi_wp()->initialize() ) return;
+		
+		// make sure Civi file is included
 		require_once 'CRM/Core/BAO/UFMatch.php';
 
+		// get all WordPress users
+		$users = get_users();
+		
+		// loop through all users
 		foreach( $users AS $user ) {
-
+			
+			// sanity check
 			$uid = $user->ID;
 			if ( empty( $uid ) ) {
 				continue;
 			}
-	
+			
+			// get Civi contact
 			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = '$uid'";
 			$contact = CRM_Core_DAO::executeQuery($sql); 
-	
+			
+			// did we get one?
 			if ( $contact->fetch() ) {
-	
+				
+				// get membership details
 				$cid = $contact->contact_id;
 				$memDetails = civicrm_api( 'Membership', 'get', array(
 					'version' => '3',
@@ -500,20 +524,22 @@ class Civi_Member_Sync_CiviCRM {
 					'sequential' => '1',
 					'contact_id' => $cid
 				));
-			 
+			 	
+			 	// did we get any?
 				if ( !empty( $memDetails['values'] ) ) {
 					foreach( $memDetails['values'] AS $key => $value ) {
 						$memStatusID = $value['status_id']; 
 						$membershipTypeID = $value['membership_type_id'];
 					}         
 				}
-
+				
+				// get WordPress role
 				$userData = get_userdata( $uid );
 				if ( !empty( $userData ) ) {
 					$currentRole = $userData->roles[0];
 				}
 
-				// checking membership status and assign role
+				// check Civi membership status and assign WordPress role
 				$check = $this->member_check( $cid, $uid, $currentRole );
 
 			}
@@ -536,11 +562,13 @@ class Civi_Member_Sync_CiviCRM {
 		// return empty array if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return $membership_type;
 		
+		// get membership details
 		$membership_type_details = civicrm_api( 'MembershipType', 'get', array(
 			'version' => '3',
 			'sequential' => '1',
 		));
 		
+		// construct array of types
 		foreach( $membership_type_details['values'] AS $key => $values ) {
 			$membership_type[$values['id']] = $values['name']; 
 		}
@@ -564,11 +592,13 @@ class Civi_Member_Sync_CiviCRM {
 		// return empty array if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return $membership_status;
 		
+		// get membership details
 		$membership_status_details = civicrm_api( 'MembershipStatus', 'get', array(
 			'version' => '3',
 			'sequential' => '1',
 		));
 		
+		// construct array of statuses
 		foreach( $membership_status_details['values'] AS $key => $values ) {
 			$membership_status[$values['id']] = $values['name']; 
 		}

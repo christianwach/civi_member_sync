@@ -2,7 +2,7 @@
 
 <div class="wrap">
 
-	<h2 id="add-new-user"><?php 
+	<h2><?php 
 	
 	if( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
 		_e( 'Edit Association Rule', 'civi_member_sync' ); 
@@ -10,7 +10,7 @@
 		_e( 'Add Association Rule', 'civi_member_sync' );
 	}
 	
-	?></h2>
+	?> <a class="add-new-h2" href="<?php echo $list_url; ?>"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a class="add-new-h2" href="<?php echo $manual_sync_url; ?>"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a></h2>
 	
 	<?php
 	
