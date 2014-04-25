@@ -155,6 +155,7 @@ class Civi_Member_Sync_CiviCRM {
 			
 		}
 		
+		// --<
 		return true;
 		
 	}
@@ -176,7 +177,7 @@ class Civi_Member_Sync_CiviCRM {
 		if ( $current_user_role != 'administrator' ) {
 		
 			// fetching membership details
-			$memDetails=civicrm_api( 'Membership', 'get', array(
+			$memDetails = civicrm_api( 'Membership', 'get', array(
 				'version' => '3',
 				'page' => 'CiviCRM',
 				'q' => 'civicrm/ajax/rest',
@@ -186,14 +187,14 @@ class Civi_Member_Sync_CiviCRM {
 			//print_r($memDetails); echo "\n";
 			
 			if ( !empty( $memDetails['values'] ) ) {
-				foreach( $memDetails['values'] as $key => $value ) {
+				foreach( $memDetails['values'] AS $key => $value ) {
 					$memStatusID = $value['status_id'];
 					$membershipTypeID = $value['membership_type_id'];
 				}
 			}
 
 			// fetching member sync association rule to the corsponding membership type 
-			$table_name = $wpdb->prefix . "civi_member_sync";
+			$table_name = $wpdb->prefix . 'civi_member_sync';
 			$memSyncRulesDetails = $wpdb->get_results( "SELECT * FROM $table_name WHERE civi_mem_type = '$membershipTypeID'" ); 
 			//print_r($memSyncRulesDetails);
 			
@@ -231,7 +232,7 @@ class Civi_Member_Sync_CiviCRM {
 						$wp_user_object->set_role( "$expired_wp_role" ); 
 					} else {
 						//print 'expired member, up to date';
-						$wp_user_object->set_role( "" );
+						$wp_user_object->set_role( '' );
 					}
 					
 				}
@@ -240,6 +241,7 @@ class Civi_Member_Sync_CiviCRM {
 			
 		}
 		
+		// --<
 		return true;
 		
 	}
@@ -253,7 +255,7 @@ class Civi_Member_Sync_CiviCRM {
 	public function update_rules() {
 		
 		// check that we trust the source of the data
-		check_admin_referer( 'civi_member_sync_admin_action', 'civi_member_sync_nonce' );
+		check_admin_referer( 'civi_member_sync_rules_action', 'civi_member_sync_nonce' );
 		
 		if( !empty( $_POST['wp_role'] ) ) {
 			$wp_role = $_POST['wp_role'];
@@ -276,19 +278,19 @@ class Civi_Member_Sync_CiviCRM {
 			}   
 			$current_rule = serialize( $_POST['current'] );   
 		} else {
-			$errors[] = "Current Status field is required.";
+			$errors[] = 'Current Status field is required.';
 		}
 		
 		if ( !empty( $_POST['expire'] ) ) {   
 			$expiry_rule = serialize( $_POST['expire'] ); 
 		} else {
-			$errors[] = "Expiry Status field is required.";
+			$errors[] = 'Expiry Status field is required.';
 		}
 		
 		if ( empty( $sameType ) AND empty( $errors ) ) {
 			
 			/*
-			$table_name = $wpdb->prefix . "civi_member_sync";    
+			$table_name = $wpdb->prefix . 'civi_member_sync';    
 			$insert = $wpdb->get_results( 
 				"REPLACE INTO $table_name ".
 				"SET `wp_role` = '$wp_role', ".
@@ -298,7 +300,7 @@ class Civi_Member_Sync_CiviCRM {
 				"`expire_wp_role` = '$expired_wp_role'"
 			);
 			
-			$location = get_bloginfo('url')."/wp-admin/options-general.php?page=civi_member_sync/list.php";
+			$location = get_bloginfo('url').'/wp-admin/options-general.php?page=civi_member_sync/list.php';
 			echo "<meta http-equiv='refresh' content='0;url=$location' />";
 			exit;
 			*/
@@ -306,12 +308,12 @@ class Civi_Member_Sync_CiviCRM {
 		} else {
 		
 			if ( !empty( $sameType ) ) {  
-				$errors[] = "You can not have the same Status Rule registered as both \"Current\" and \"Expired\".";
+				$errors[] = __( 'You can not have the same Status Rule registered as both "Current" and "Expired".', 'civi_member_sync' );
 			}
 			
 			?><span class="error" style="color: #FF0000;"><?php 
 				foreach ($errors AS $key => $values ) {
-					echo $values."<br>";
+					echo $values.'<br>';
 				} 
 			?></span><?php
 			
@@ -333,7 +335,7 @@ class Civi_Member_Sync_CiviCRM {
 			!wp_verify_nonce( $_GET['civi_member_sync_delete_nonce'], 'civi_member_sync_delete_link' )
 		) {
 		
-			wp_die( 'Cheating, eh?' );
+			wp_die( __( 'Cheating, eh?', 'civi_member_sync' ) );
 			exit();
 			
 		}
@@ -357,7 +359,7 @@ class Civi_Member_Sync_CiviCRM {
 	public function do_manual_sync() {
 	
 		// check that we trust the source of the data
-		check_admin_referer( 'civi_member_sync_manual_sync', 'civi_member_sync_nonce' );
+		check_admin_referer( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' );
 		
 		$users = get_users();
 
@@ -371,7 +373,7 @@ class Civi_Member_Sync_CiviCRM {
 				continue;
 			}
 	
-			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = $uid";
+			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = '$uid'";
 			$contact = CRM_Core_DAO::executeQuery($sql); 
 	
 			if ( $contact->fetch() ) {
@@ -416,15 +418,15 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// init return
 		$membership_type = array();
-
+		
 		// return empty array if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return $membership_type;
-
+		
 		$membership_type_details = civicrm_api( 'MembershipType', 'get', array(
 			'version' => '3',
 			'sequential' => '1',
 		));
-
+		
 		foreach( $membership_type_details['values'] AS $key => $values ) {
 			$membership_type[$values['id']] = $values['name']; 
 		}
@@ -444,15 +446,15 @@ class Civi_Member_Sync_CiviCRM {
 	
 		// init return
 		$membership_status = array();
-
+		
 		// return empty array if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return $membership_status;
-
+		
 		$membership_status_details = civicrm_api( 'MembershipStatus', 'get', array(
 			'version' => '3',
 			'sequential' => '1',
 		));
-
+		
 		foreach( $membership_status_details['values'] AS $key => $values ) {
 			$membership_status[$values['id']] = $values['name']; 
 		}
@@ -473,7 +475,7 @@ class Civi_Member_Sync_CiviCRM {
 		$memArray = array_flip( $memArray );
 		
 		// init current rule
-		$current_rule =  unserialize($values);
+		$current_rule = unserialize($values);
 		if ( empty( $current_rule ) ) {
 			$current_rule = $values; 
 		}

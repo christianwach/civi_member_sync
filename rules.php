@@ -1,28 +1,3 @@
-<?php 
-
-// get membership data
-$membership_type = $this->civi->get_types();
-$membership_status = $this->civi->get_statuses();
-
-// original logic...
-if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
-	if ( !empty( $_GET['id'] ) ) {
-		$table_name = $wpdb->prefix . 'civi_member_sync';
-		$select = $wpdb->get_row( "SELECT * FROM $table_name WHERE `id` = ".$_GET['id'] );
-		$wp_role = $select->wp_role; 
-		$expired_wp_role = $select->expire_wp_role; 
-		$civi_member_type = $select->civi_mem_type;  
-		$current_rule = unserialize( $select->current_rule );
-		$expiry_rule = unserialize( $select->expiry_rule );
-	}      
-}
-
-// sanitise admin page url
-$target_url = $_SERVER['REQUEST_URI'];
-$url_array = explode( '&', $target_url );
-if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' ); }
-
-?>
 <div id="icon-options-general" class="icon32"></div> 
 
 <div class="wrap">
@@ -30,25 +5,25 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 	<h2 id="add-new-user"><?php 
 	
 	if( isset( $_GET['q'] ) ) {
-		echo 'Edit Association Rule'; 
+		_e( 'Edit Association Rule', 'civi_member_sync' ); 
 	} else {
-		echo 'Add Association Rule';
+		_e( 'Add Association Rule', 'civi_member_sync' );
 	}
 	
 	?></h2>
 	
-	<p>Choose a CiviMember Membership Type and a WordPress Role below. This will associate that Membership Type with the WordPress Role. If you would like the have the same Membership Type associated with more than one WordPress Role, you will need to add a second association rule after you have completed this one.</p>
+	<p><?php _e( 'Choose a CiviMember Membership Type and a WordPress Role below. This will associate that Membership Type with the WordPress Role. If you would like the have the same Membership Type associated with more than one WordPress Role, you will need to add a second association rule after you have completed this one.', 'civi_member_sync' ); ?></p>
 	
-	<form method="post" id="civi_member_sync_rules_form" action="<?php echo $target_url; ?>">
+	<form method="post" id="civi_member_sync_rules_form" action="<?php echo $this->get_form_url(); ?>">
 		
-		<?php wp_nonce_field( 'civi_member_sync_admin_action', 'civi_member_sync_nonce' ); ?>
+		<?php wp_nonce_field( 'civi_member_sync_rules_action', 'civi_member_sync_nonce' ); ?>
 		
 		<span class="error"><?php echo $nameErr; ?></span>
 		
 		<table class="form-table">
 
 			<tr class="form-field form-required">
-				<th scope="row"><label for="user_login">Select a CiviMember Membership Type *</label></th>
+				<th scope="row"><label for="user_login"><?php _e( 'Select a CiviMember Membership Type', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 					<select name="civi_member_type" id= "civi_member_type" class ="required">
 						<option value=""></option>
@@ -71,7 +46,7 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 			</tr>
 			
 			<tr class="form-field form-required">  
-				<th scope="row"><label for="user_login">Select a WordPress Role *</label></th>
+				<th scope="row"><label for="user_login"><?php _e( 'Select a WordPress Role', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 					<select name="wp_role" id="wp_role" class="required">
 						<option value=""></option>
@@ -97,7 +72,7 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 			</tr>                
 
 			<tr>
-				<th scope="row"><label for="user_login">Current Status *</label></th>
+				<th scope="row"><label for="user_login"><?php _e( 'Current Status', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 				<?php
 				
@@ -122,7 +97,7 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 			</tr>
 			
 			<tr>
-				<th scope="row"><label for="user_login">Expire Status *</label></th>
+				<th scope="row"><label for="user_login"><?php _e( 'Expire Status', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 				<?php
 				
@@ -146,7 +121,7 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 			</tr>
 			
 			<tr class="form-field form-required">
-				<th scope="row"><label for="user_login">Select a WordPress Expiry Role *</label></th>
+				<th scope="row"><label for="user_login"><?php _e( 'Select a WordPress Expiry Role', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 					<select name="expire_assign_wp_role" id ="expire_assign_wp_role" class ="required">
 						<option value=""></option>
@@ -176,9 +151,9 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 		<?php
 		
 		if ( isset( $_GET['q'] ) ) {
-			$submit = "Save Association Rule";
+			$submit = __( 'Save Association Rule', 'civi_member_sync' );
 		} else {
-			$submit = "Add Association Rule";
+			$submit = __( 'Add Association Rule', 'civi_member_sync' );
 		}
 		
 		?><input class="button-primary" type="submit" id="civi_member_sync_rules_submit" name="civi_member_sync_rules_submit" value="<?php echo $submit; ?>" />

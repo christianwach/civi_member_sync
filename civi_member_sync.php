@@ -72,7 +72,7 @@ class Civi_Member_Sync {
 		// initialise plugin when CiviCRM initialises
 		add_action( 'civicrm_instance_loaded', array( $this, 'initialise' ) );
 		
-		// load our CiviCRM utility functions class
+		// load our CiviCRM utility class
 		require( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'civi_member_sync_civi.php' );
 		
 		// initialise
@@ -122,7 +122,7 @@ class Civi_Member_Sync {
 		// access database object
 		global $wpdb;
 		
-		// contruct table name
+		// construct table name
 		$table_name = $wpdb->prefix . 'civi_member_sync';
 		
 		// define table structure
@@ -236,6 +236,22 @@ class Civi_Member_Sync {
 	 */
 	public function admin_list() {
 		
+		// access database object
+		global $wpdb;
+
+		// get membership data
+		$membership_type = $this->civi->get_types();
+		$membership_status = $this->civi->get_statuses();
+
+		// get admin page URLs
+		$list_url = menu_page_url( 'civi_member_sync_list', false );
+		$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
+		$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+
+		// get tabular data
+		$table_name = $wpdb->prefix . 'civi_member_sync';
+		$select = $wpdb->get_results( "SELECT * FROM $table_name" );
+
 		// include template file
 		include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'list.php' );
 		
@@ -249,6 +265,25 @@ class Civi_Member_Sync {
 	 */
 	public function admin_rules() {
 	
+		// get membership data
+		$membership_type = $this->civi->get_types();
+		$membership_status = $this->civi->get_statuses();
+
+		// original logic...
+		if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
+			if ( !empty( $_GET['id'] ) ) {
+			
+				$table_name = $wpdb->prefix . 'civi_member_sync';
+				$select = $wpdb->get_row( "SELECT * FROM $table_name WHERE `id` = ".$_GET['id'] );
+				$wp_role = $select->wp_role; 
+				$expired_wp_role = $select->expire_wp_role; 
+				$civi_member_type = $select->civi_mem_type;  
+				$current_rule = unserialize( $select->current_rule );
+				$expiry_rule = unserialize( $select->expiry_rule );
+				
+			}      
+		}
+
 		// include template file
 		include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'rules.php' );
 		
@@ -407,6 +442,24 @@ class Civi_Member_Sync {
 		
 		// --<
 		return $result;
+		
+	}
+	
+	
+	
+	/** 
+	 * Got the URL for the form action
+	 * @return string $target_url The URL for the admin form action
+	 */
+	public function get_form_url() {
+	
+		// sanitise admin page url
+		$target_url = $_SERVER['REQUEST_URI'];
+		$url_array = explode( '&', $target_url );
+		if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' ); }
+		
+		// --<
+		return $target_url;
 		
 	}
 	
