@@ -1,93 +1,37 @@
-<div id="icon-options-general" class="icon32"><br/></div>
+<?php
+
+// sanitise admin page url
+$target_url = $_SERVER['REQUEST_URI'];
+$url_array = explode( '&', $target_url );
+if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' ); }
+
+?><div id="icon-options-general" class="icon32"><br/></div>
 
 <div class="wrap">
 
-
-
 <h2>Manual Synchronize</h2>
-
-
-
-<?php if ( !$_GET['action'] ) {
-
-	$sync_confirm_url = get_bloginfo('url')."/wp-admin/admin.php?&action=confirm&page=civi_member_sync/manual_sync.php"; 
-	
-	?>
-	
-	<p>Synchronize CiviMember Memberships and WordPress Roles using the available rules. <em>Note:</em> if no association rules exist then no synchronization will take place.</p>
-	    
-	<input class="button-primary" type="submit" value="Synchronize now" onclick="window.location.href='<?php echo $sync_confirm_url; ?>'" />
-
-<?php } ?>
-
-
 
 <?php 
 
-/*
-if ( $_GET['action'] == 'confirm' ) {
-	
-	$users = get_users();
-	
-	require_once('civi.php');
-	require_once 'CRM/Core/BAO/UFMatch.php';
-	
-	foreach( $users AS $user ) {
-
-		$uid = $user->ID;
-		if ( empty( $uid ) ) {
-			continue;
-		}
-		
-		$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = $uid";
-		$contact = CRM_Core_DAO::executeQuery($sql); 
-		
-		if ( $contact->fetch() ) {
-		
-			$cid = $contact->contact_id;
-			$memDetails = civicrm_api( 'Membership', 'get', array(
-				'version' => '3',
-				'page' => 'CiviCRM',
-				'q' => 'civicrm/ajax/rest',
-				'sequential' => '1',
-				'contact_id' => $cid
-			));
-			     
-			if ( !empty( $memDetails['values'] ) ) {
-				foreach( $memDetails['values'] AS $key => $value ) {
-					$memStatusID = $value['status_id']; 
-					$membershipTypeID = $value['membership_type_id'];
-				}         
-			}
-
-			$userData = get_userdata( $uid );
-			if ( !empty( $userData ) ) {
-				$currentRole = $userData->roles[0];
-			}
-
-			// checking membership status and assign role
-			global $civi_member_sync;
-			$check = $civi_member_sync->member_check( $cid, $uid, $currentRole );
-
-		}
-
-	}
-
-	?>   
-
-	<div id="message" class="updated below-h2">
-		<span><p>CiviMember Memberships and WordPress Roles have been synchronized using available rules. Note: if no association rules exist then synchronization has not been completed.</p></span>
-	</div>
-	
-	<?php 
-
+// if we've updated, show message...
+if ( isset( $_GET['updated'] ) ) {
+	echo '<div id="message" class="updated"><p>'.__( 'Sync completed.', 'civicrm_member_sync' ).'</p></div>';
 }
-*/
 
 ?>
 
+<p>Synchronize CiviMember Memberships and WordPress Roles using the available rules.<br>
+<em>Note:</em> if no association rules exist then no synchronization will take place.</p>
+	
+<form method="post" id="civi_member_sync_manual_sync_form" action="<?php echo $target_url; ?>">
 
+	<?php wp_nonce_field( 'civi_member_sync_manual_sync', 'civi_member_sync_nonce' ); ?>
+
+	<input class="button-primary" type="submit"  id="civi_member_sync_manual_sync_submit" name="civi_member_sync_manual_sync_submit" value="Synchronize now" />
+
+</form>
 
 </div><!-- /.wrap -->
+
 
 

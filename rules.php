@@ -1,11 +1,8 @@
 <?php 
 
-// access plugin object
-global $civi_member_sync;
-
 // get membership data
-$membership_type = $civi_member_sync->get_types();
-$membership_status = $civi_member_sync->get_statuses();
+$membership_type = $this->civi->get_types();
+$membership_status = $this->civi->get_statuses();
 
 // original logic...
 if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
@@ -42,14 +39,9 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 	
 	<p>Choose a CiviMember Membership Type and a WordPress Role below. This will associate that Membership Type with the WordPress Role. If you would like the have the same Membership Type associated with more than one WordPress Role, you will need to add a second association rule after you have completed this one.</p>
 	
-	<form method="post" id="civi_member_sync_form" action="<?php echo $target_url; ?>">
+	<form method="post" id="civi_member_sync_rules_form" action="<?php echo $target_url; ?>">
 		
-		<?php
-		
-		// security stuff
-		wp_nonce_field( 'civi_member_sync_admin_action', 'civi_member_sync_nonce' );
-		
-		?>
+		<?php wp_nonce_field( 'civi_member_sync_admin_action', 'civi_member_sync_nonce' ); ?>
 		
 		<span class="error"><?php echo $nameErr; ?></span>
 		
@@ -189,7 +181,7 @@ if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' );
 			$submit = "Add Association Rule";
 		}
 		
-		?><input class="button-primary" type="submit" id="civi_member_sync_submit" name="civi_member_sync_submit" value="<?php echo $submit; ?>" />
+		?><input class="button-primary" type="submit" id="civi_member_sync_rules_submit" name="civi_member_sync_rules_submit" value="<?php echo $submit; ?>" />
 
 	</form>
 
