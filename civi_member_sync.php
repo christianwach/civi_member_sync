@@ -179,16 +179,13 @@ class Civi_Member_Sync {
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
 
-			// try and update options
-			$saved = $this->options_update();
-			
 			// add options page
 			$this->list_page = add_options_page(
 				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // page title
 				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // menu title
 				'manage_options', // required caps
 				'civi_member_sync_list', // slug name
-				array( $this, 'admin_list' ) // callback
+				array( $this, 'rules_list' ) // callback
 			);
 		
 			// add scripts and styles
@@ -202,7 +199,7 @@ class Civi_Member_Sync {
 				__( 'Association Rules', 'civi_member_sync' ), // menu title
 				'manage_options', // required caps
 				'civi_member_sync_rules', // slug name
-				array( $this, 'admin_rules' ) // callback
+				array( $this, 'rules_add_edit' ) // callback
 			);
 		
 			// add scripts and styles
@@ -217,93 +214,22 @@ class Civi_Member_Sync {
 				__( 'Manual Sync', 'civi_member_sync' ), // menu title
 				'manage_options', // required caps
 				'civi_member_sync_manual_sync', // slug name
-				array( $this, 'admin_sync' ) // callback
+				array( $this, 'rules_sync' ) // callback
 			);
 		
 			// add scripts and styles
 			add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
 
-		}
-		
-	}
-	
-	
-	
-	/** 
-	 * Show civi_member_sync_list admin page
-	 * @return nothing
-	 */
-	public function admin_list() {
-		
-		// access database object
-		global $wpdb;
-
-		// get membership data
-		$membership_type = $this->civi->get_types();
-		$membership_status = $this->civi->get_statuses();
-
-		// get admin page URLs
-		$list_url = menu_page_url( 'civi_member_sync_list', false );
-		$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
-		$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
-
-		// get tabular data
-		$table_name = $wpdb->prefix . 'civi_member_sync';
-		$select = $wpdb->get_results( "SELECT * FROM $table_name" );
-
-		// include template file
-		include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'list.php' );
-		
-	}
-	
-	
-		
-	/** 
-	 * Show civi_member_sync_rules admin page
-	 * @return nothing
-	 */
-	public function admin_rules() {
-	
-		// get membership data
-		$membership_type = $this->civi->get_types();
-		$membership_status = $this->civi->get_statuses();
-
-		// original logic...
-		if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
-			if ( !empty( $_GET['id'] ) ) {
+			// try and update options
+			$saved = $this->admin_update();
 			
-				$table_name = $wpdb->prefix . 'civi_member_sync';
-				$select = $wpdb->get_row( "SELECT * FROM $table_name WHERE `id` = ".$_GET['id'] );
-				$wp_role = $select->wp_role; 
-				$expired_wp_role = $select->expire_wp_role; 
-				$civi_member_type = $select->civi_mem_type;  
-				$current_rule = unserialize( $select->current_rule );
-				$expiry_rule = unserialize( $select->expiry_rule );
-				
-			}      
 		}
-
-		// include template file
-		include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'rules.php' );
 		
 	}
 	
 	
-		
-	/** 
-	 * Show civi_member_sync_manual_sync admin page
-	 * @return nothing
-	 */
-	public function admin_sync() {
-		
-		// include template file
-		include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'manual_sync.php' );
-		
-	}
 	
-	
-		
 	/** 
 	 * Initialise plugin help
 	 * @return nothing
@@ -409,34 +335,25 @@ class Civi_Member_Sync {
 	 * Save the settings set by the administrator
 	 * @return bool $result Success or failure
 	 */
-	public function options_update() {
+	public function admin_update() {
 	
 		// init result
 		$result = false;
 		
 	 	// was the rules form submitted?
 		if( isset( $_POST[ 'civi_member_sync_rules_submit' ] ) ) {
-			
-			// hand over to method...
 			$result = $this->civi->update_rules();
-			
 		}
 		
 		// was the Manual Sync form submitted?
 		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
-	
-			// hand over to method...
 			$result = $this->civi->do_manual_sync();
-			
 		}
 
 		// was a delete link clicked?
-		if ( isset( $_GET['q'] ) AND $_GET['q'] == 'delete' ) {
-			if ( !empty( $_GET['id'] ) ) {
-
-				// hand over to method...
+		if ( isset( $_GET['syncrule'] ) AND $_GET['syncrule'] == 'delete' ) {
+			if ( !empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
 				$result = $this->civi->delete_rule();
-			
 			}
 		}
 		
@@ -448,7 +365,104 @@ class Civi_Member_Sync {
 	
 	
 	/** 
-	 * Got the URL for the form action
+	 * Show civi_member_sync_list admin page
+	 * @return nothing
+	 */
+	public function rules_list() {
+		
+		// check user permissions
+		if ( current_user_can('manage_options') ) {
+
+			// access database object
+			global $wpdb;
+
+			// get membership data
+			$membership_type = $this->civi->get_types();
+			$membership_status = $this->civi->get_statuses();
+
+			// get admin page URLs
+			$list_url = menu_page_url( 'civi_member_sync_list', false );
+			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
+			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+
+			// get tabular data
+			$table_name = $wpdb->prefix . 'civi_member_sync';
+			$select = $wpdb->get_results( "SELECT * FROM $table_name" );
+
+			// include template file
+			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'list.php' );
+		
+		}
+		
+	}
+	
+	
+		
+	/** 
+	 * Show civi_member_sync_rules admin page
+	 * @return nothing
+	 */
+	public function rules_add_edit() {
+	
+		// check user permissions
+		if ( current_user_can('manage_options') ) {
+			
+			// get membership data
+			$membership_type = $this->civi->get_types();
+			$membership_status = $this->civi->get_statuses();
+			
+			// do we want to populate the form?
+			if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
+				if ( isset( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
+					
+					// access db object
+					global $wpdb;
+					
+					// get rule
+					$table_name = $wpdb->prefix . 'civi_member_sync';
+					$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE `id` = %d", absint( $_GET['id'] ) );
+					$select = $wpdb->get_row( $sql );
+					//print_r( array( $sql, $select ) ); die();
+					
+					// set vars for populating form
+					$wp_role = $select->wp_role; 
+					$civi_member_type = $select->civi_mem_type;  
+					$current_rule = unserialize( $select->current_rule );
+					$expiry_rule = unserialize( $select->expiry_rule );
+					$expired_wp_role = $select->expire_wp_role; 
+				
+				}      
+			}
+			
+			// include template file
+			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'rules.php' );
+		
+		}
+		
+	}
+	
+	
+		
+	/** 
+	 * Show civi_member_sync_manual_sync admin page
+	 * @return nothing
+	 */
+	public function rules_sync() {
+		
+		// check user permissions
+		if ( current_user_can('manage_options') ) {
+
+			// include template file
+			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'manual_sync.php' );
+		
+		}
+		
+	}
+	
+	
+		
+	/** 
+	 * Get the URL for the form action
 	 * @return string $target_url The URL for the admin form action
 	 */
 	public function get_form_url() {
@@ -493,8 +507,7 @@ register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );
  * @return array $links The list of plugin links
  */
 function civi_member_sync_plugin_add_settings_link( $links ) {
-	$settings_link = '<a href="admin.php?page=civi_member_sync/list.php">'.__( 'Settings', 'civi_member_sync' ).'</a>';
-  	array_push( $links, $settings_link );
+  	$links[] = '<a href="admin.php?page=civi_member_sync_list">' . __( 'Settings', 'civi_member_sync' ) . '</a>';
   	return $links;
 }
 

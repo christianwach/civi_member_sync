@@ -5,12 +5,42 @@ Civi_Member_Sync_CiviCRM Class
 */  
 
 class Civi_Member_Sync_CiviCRM {
-
+	
+	
+	
+	/** 
+	 * Properties
+	 */
+	
+	// form error messages
+	public $error_strings;
+	
+	// errors in current submission
+	public $errors;
+	
+	
+	
 	/** 
 	 * Initialise this object
 	 * @return object
 	 */
 	function __construct() {
+		
+		// define errors
+		$this->error_strings = array(
+			
+			// update rules error strings
+			1 => __( 'Please select a CiviCRM Membership Type', 'civi_member_sync' ),
+			2 => __( 'Please select a WordPress Role.', 'civi_member_sync' ),
+			3 => __( 'Please select a Current Status', 'civi_member_sync' ),
+			4 => __( 'Please select an Expire Status', 'civi_member_sync' ),
+			5 => __( 'Please select a WordPress Expiry Role', 'civi_member_sync' ),
+			6 => __( 'You can not have the same Status Rule registered as both "Current" and "Expired"', 'civi_member_sync' ),
+			
+			// delete rule error strings
+			7 => __( 'Could not delete Association Rule', 'civi_member_sync' ),
+			
+		);
 	
 		// --<
 		return $this;
@@ -257,65 +287,131 @@ class Civi_Member_Sync_CiviCRM {
 		// check that we trust the source of the data
 		check_admin_referer( 'civi_member_sync_rules_action', 'civi_member_sync_nonce' );
 		
-		if( !empty( $_POST['wp_role'] ) ) {
-			$wp_role = $_POST['wp_role'];
+		// init errors
+		$this->errors = array();
+		
+		// check and sanitise CiviCRM Membership Type
+		if( 
+			isset( $_POST['civi_member_type'] ) AND 
+			!empty( $_POST['civi_member_type'] ) AND
+			is_numeric( $_POST['civi_member_type'] )
+		) {
+			$civi_member_type = absint( $_POST['civi_member_type'] );
+		} else {
+			$this->errors[] = 1;
 		}
 		
-		if ( !empty( $_POST['civi_member_type'] ) ) {
-			$civi_member_type = $_POST['civi_member_type'];
+		// check and sanitise WP Role
+		if( 
+			isset( $_POST['wp_role'] ) AND 
+			!empty( $_POST['wp_role'] ) 
+		) {
+			$wp_role = esc_sql( trim( $_POST['wp_role'] ) );
+		} else {
+			$this->errors[] = 2;
 		}
 		
-		if ( !empty( $_POST['expire_assign_wp_role'] ) ) {
-			$expired_wp_role = $_POST['expire_assign_wp_role'];
-		}
+		// init current-expire checking
+		$sameType = '';
 		
-		if ( !empty( $_POST['current'] ) ) {
-			$sameType = '';
-			foreach( $_POST['current'] AS $key => $value ) {
-				if ( !empty( $_POST['expire'] ) ) {
+		// check and sanitise Current Status
+		if ( 
+			isset( $_POST['current'] ) AND 
+			is_array( $_POST['current'] ) AND
+			!empty( $_POST['current'] )
+		) {
+			
+			// first, check against 'expire' array
+			if ( 
+				isset( $_POST['expire'] ) AND 
+				is_array( $_POST['expire'] ) AND 
+				!empty( $_POST['expire'] ) ) 
+			{
+				foreach( $_POST['current'] AS $key => $value ) {
 					$sameType .= array_search( $key, $_POST['expire'] );
 				}
-			}   
-			$current_rule = serialize( $_POST['current'] );   
-		} else {
-			$errors[] = 'Current Status field is required.';
-		}
-		
-		if ( !empty( $_POST['expire'] ) ) {   
-			$expiry_rule = serialize( $_POST['expire'] ); 
-		} else {
-			$errors[] = 'Expiry Status field is required.';
-		}
-		
-		if ( empty( $sameType ) AND empty( $errors ) ) {
-			
-			/*
-			$table_name = $wpdb->prefix . 'civi_member_sync';    
-			$insert = $wpdb->get_results( 
-				"REPLACE INTO $table_name ".
-				"SET `wp_role` = '$wp_role', ".
-				"`civi_mem_type` = '$civi_member_type', ".
-				"`current_rule` = '$current_rule', ".
-				"`expiry_rule` = '$expiry_rule', ".
-				"`expire_wp_role` = '$expired_wp_role'"
-			);
-			
-			$location = get_bloginfo('url').'/wp-admin/options-general.php?page=civi_member_sync/list.php';
-			echo "<meta http-equiv='refresh' content='0;url=$location' />";
-			exit;
-			*/
-			
-		} else {
-		
-			if ( !empty( $sameType ) ) {  
-				$errors[] = __( 'You can not have the same Status Rule registered as both "Current" and "Expired".', 'civi_member_sync' );
 			}
 			
-			?><span class="error" style="color: #FF0000;"><?php 
-				foreach ($errors AS $key => $values ) {
-					echo $values.'<br>';
-				} 
-			?></span><?php
+			// serialize
+			$current_rule = serialize( $_POST['current'] );
+			   
+		} else {
+			$this->errors[] = 3;
+		}
+		
+		// check and sanitise Expire Status
+		if ( 
+			isset( $_POST['expire'] ) AND 
+			is_array( $_POST['expire'] ) AND
+			!empty( $_POST['expire'] )
+		) {
+			$expiry_rule = serialize( $_POST['expire'] ); 
+		} else {
+			$this->errors[] = 4;
+		}
+		
+		// check and sanitise Expiry Role
+		if ( 
+			isset( $_POST['expire_assign_wp_role'] ) AND 
+			!empty( $_POST['expire_assign_wp_role'] ) 
+		) {
+			$expired_wp_role = esc_sql( trim( $_POST['expire_assign_wp_role'] ) );
+		} else {
+			$this->errors[] = 5;
+		}
+		
+		// how did we do?
+		if ( $sameType === '' AND empty( $this->errors ) ) {
+		
+			// we're good - let's add/update this rule
+
+			// access db object
+			global $wpdb;
+			
+			$table_name = $wpdb->prefix . 'civi_member_sync';
+			
+			// construct sql
+			$sql = $wpdb->prepare(
+				"REPLACE INTO $table_name SET 
+				`wp_role` = %s, 
+				`civi_mem_type` = %s, 
+				`current_rule` = %s, 
+				`expiry_rule` = %s, 
+				`expire_wp_role` = %s",
+				$wp_role,
+				$civi_member_type,
+				$current_rule,
+				$expiry_rule,
+				$expired_wp_role
+			);
+			
+			// do query
+			$wpdb->query( $sql );
+			
+			// default save mode to 'add'
+			$mode = 'add';
+			
+			// test our hidden element
+			if ( 
+				isset( $_POST['civi_member_sync_rules_mode'] ) AND
+				$_POST['civi_member_sync_rules_mode'] == 'edit'
+			) {
+				$mode = 'edit';
+			}
+			
+			// redirect to list page
+			wp_redirect( menu_page_url( 'civi_member_sync_list', false ) . '&syncrule=' . $mode );
+			die();
+			
+		} else {
+			
+			// in addition, are there type matches?
+			if ( !empty( $sameType ) ) {  
+				$this->errors[] = 6;
+			}
+			
+			// sad face
+			return false;
 			
 		}
 
@@ -340,13 +436,31 @@ class Civi_Member_Sync_CiviCRM {
 			
 		}
 		
-		/*
-		// contruct table name
+		// access db object
+		global $wpdb;
+		
+		// construct table name
 		$table_name = $wpdb->prefix . 'civi_member_sync';
 		
-		// noooo, redo this
-		$delete = $wpdb->get_results( "DELETE FROM $table_name WHERE `id` = " . $_GET['id'] );        
-		*/
+		// construct query
+		$sql = $wpdb->prepare( "DELETE FROM $table_name WHERE `id` = %d", absint( $_GET['id'] ) );
+		
+		// do query
+		if ( $wpdb->query( $sql ) ) {
+			
+			// redirect to list page with message
+			wp_redirect( menu_page_url( 'civi_member_sync_list', false ) . '&syncrule=delete' );
+			die();
+			
+		} else {
+			
+			// show error
+			$this->errors[] = 7;
+			
+			// sad face
+			return false;
+			
+		}
 		
 	}
 	
@@ -358,7 +472,7 @@ class Civi_Member_Sync_CiviCRM {
 	 */
 	public function do_manual_sync() {
 	
-		// check that we trust the source of the data
+		// check that we trust the source of the request
 		check_admin_referer( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' );
 		
 		$users = get_users();
