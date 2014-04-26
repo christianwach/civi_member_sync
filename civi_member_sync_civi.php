@@ -237,7 +237,8 @@ class Civi_Member_Sync_CiviCRM {
 
 			// fetching member sync association rule to the corsponding membership type 
 			$table_name = $wpdb->prefix . 'civi_member_sync';
-			$memSyncRulesDetails = $wpdb->get_results( "SELECT * FROM $table_name WHERE civi_mem_type = '$membershipTypeID'" ); 
+			$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE civi_mem_type = %d", $membershipTypeID );
+			$memSyncRulesDetails = $wpdb->get_results( $sql ); 
 			//print_r($memSyncRulesDetails);
 			
 			if ( !empty( $memSyncRulesDetails ) ) {
