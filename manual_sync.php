@@ -19,7 +19,7 @@
 
 		<?php wp_nonce_field( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' ); ?>
 
-		<input class="button-primary" type="submit"  id="civi_member_sync_manual_sync_submit" name="civi_member_sync_manual_sync_submit" value="<?php _e( 'Synchronize Now', 'civi_member_sync' ); ?>" />
+		<input class="button-primary" type="submit" id="civi_member_sync_manual_sync_submit" name="civi_member_sync_manual_sync_submit" value="<?php _e( 'Synchronize Now', 'civi_member_sync' ); ?>" />
 
 	</form>
 

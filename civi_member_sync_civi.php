@@ -1,14 +1,14 @@
-<?php /* 
+<?php /*
 --------------------------------------------------------------------------------
 Civi_Member_Sync_CiviCRM Class
 --------------------------------------------------------------------------------
-*/  
+*/
 
 class Civi_Member_Sync_CiviCRM {
 	
 	
 	
-	/** 
+	/**
 	 * Properties
 	 */
 	
@@ -44,7 +44,7 @@ class Civi_Member_Sync_CiviCRM {
 	
 		// --<
 		return $this;
-
+		
 	}
 	
 	
@@ -56,10 +56,10 @@ class Civi_Member_Sync_CiviCRM {
 	public function initialise() {
 	
 		// add schedule, if not already present (to be removed)
-		if ( !wp_next_scheduled( 'civi_member_sync_refresh' ) ) {  
-		   wp_schedule_event( time(), 'daily', 'civi_member_sync_refresh' );
+		if ( !wp_next_scheduled( 'civi_member_sync_refresh' ) ) {
+			wp_schedule_event( time(), 'daily', 'civi_member_sync_refresh' );
 		}
-
+		
 		// add cron action (to be removed)
 		add_action( 'civi_member_sync_refresh', array( $this, 'sync_daily' ) );
 		
@@ -82,7 +82,7 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// disable for now
 		return;
-
+		
 		// kick out if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return;
 		
@@ -121,8 +121,8 @@ class Civi_Member_Sync_CiviCRM {
 				// if we get membership details
 				if ( !empty( $memDetails['values'] ) ) {
 					foreach( $memDetails['values'] AS $key => $value ) {
-						$memStatusID = $value['status_id']; 
-						$membershipTypeID = $value['membership_type_id'];  
+						$memStatusID = $value['status_id'];
+						$membershipTypeID = $value['membership_type_id'];
 					}
 				}
 				
@@ -133,25 +133,25 @@ class Civi_Member_Sync_CiviCRM {
 				}
 				
 				// check membership status and assign role
-				$check = $this->member_check( $cid, $uid, $currentRole );     
-
+				$check = $this->member_check( $cid, $uid, $currentRole );
+				
 			}
 			
 		}
 		
 	}
-
-
-
+	
+	
+	
 	/**
 	 * Check user's membership record during login and logout
 	 * @return bool true if successful
 	 */
-	public function sync_check( $user_login, $user ) {    
-
+	public function sync_check( $user_login, $user ) {
+	
 		// disable for now
 		return;
-
+		
 		// kick out if no CiviCRM
 		if ( ! civi_wp()->initialize() ) return;
 		
@@ -182,9 +182,9 @@ class Civi_Member_Sync_CiviCRM {
 			require_once 'api/api.php';
 			$params = array(
 				'version' => '3',
-				'page' => 'CiviCRM', 
-				'q' => 'civicrm/ajax/rest', 
-				'sequential' => '1', 
+				'page' => 'CiviCRM',
+				'q' => 'civicrm/ajax/rest',
+				'sequential' => '1',
 				'uf_id' => $currentUserID
 			);
 			
@@ -237,8 +237,8 @@ class Civi_Member_Sync_CiviCRM {
 			
 			// kick out if no type found
 			if ( ! isset($membershipTypeID) ) { return; }
-
-			// fetching member sync association rule to the corsponding membership type 
+			
+			// fetching member sync association rule to the corsponding membership type
 			$table_name = $wpdb->prefix . 'civi_member_sync';
 			$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE civi_mem_type = %d", $membershipTypeID );
 			$memSyncRulesDetails = $wpdb->get_results( $sql ); 
@@ -259,7 +259,7 @@ class Civi_Member_Sync_CiviCRM {
 					//print $wp_role;
 					
 					if ( $wp_role == $current_user_role ) {
-						//print 'current member, up to date';      
+						//print 'current member, up to date';
 						return;
 					} else {
 						//print 'current member, update';
@@ -275,7 +275,7 @@ class Civi_Member_Sync_CiviCRM {
 					
 					if ( !empty( $expired_wp_role ) ) {
 						//print 'expired member, update';
-						$wp_user_object->set_role( "$expired_wp_role" ); 
+						$wp_user_object->set_role( "$expired_wp_role" );
 					} else {
 						//print 'expired member, up to date';
 						$wp_user_object->set_role( '' );
@@ -350,7 +350,7 @@ class Civi_Member_Sync_CiviCRM {
 			
 			// serialize
 			$current_rule = serialize( $_POST['current'] );
-			   
+			
 		} else {
 			$this->errors[] = 3;
 		}
@@ -380,7 +380,7 @@ class Civi_Member_Sync_CiviCRM {
 		if ( $sameType === '' AND empty( $this->errors ) ) {
 		
 			// we're good - let's add/update this rule
-
+			
 			// access db object
 			global $wpdb;
 			
@@ -422,7 +422,7 @@ class Civi_Member_Sync_CiviCRM {
 		} else {
 			
 			// in addition, are there type matches?
-			if ( !empty( $sameType ) ) {  
+			if ( !empty( $sameType ) ) {
 				$this->errors[] = 6;
 			}
 			
@@ -431,10 +431,10 @@ class Civi_Member_Sync_CiviCRM {
 			
 		}
 
-	}  
-
-
-
+	}
+	
+	
+	
 	/**
 	 * Delete a membership rule
 	 * @return bool $success True if successful, false otherwise
@@ -499,7 +499,7 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// make sure Civi file is included
 		require_once 'CRM/Core/BAO/UFMatch.php';
-
+		
 		// get all WordPress users
 		$users = get_users();
 		
@@ -534,7 +534,7 @@ class Civi_Member_Sync_CiviCRM {
 					foreach( $memDetails['values'] AS $key => $value ) {
 						$memStatusID = $value['status_id']; 
 						$membershipTypeID = $value['membership_type_id'];
-					}         
+					}
 				}
 				
 				// get WordPress role
@@ -547,12 +547,12 @@ class Civi_Member_Sync_CiviCRM {
 						}
 					}
 				}
-
+				
 				// check Civi membership status and assign WordPress role
 				$check = $this->member_check( $cid, $uid, $currentRole );
-
+				
 			}
-
+			
 		}
 		
 	}
@@ -587,11 +587,11 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// --<
 		return $this->membership_types;
-
-	}  
-
-
-
+		
+	}
+	
+	
+	
 	/**
 	 * Get membership status rules
 	 * @return array $membership_status List of status rules, key is ID, value is name
@@ -621,10 +621,10 @@ class Civi_Member_Sync_CiviCRM {
 		// --<
 		return $this->membership_status_rules;
 
-	}  
-
-
-
+	}
+	
+	
+	
 	/**
 	 * Get name of CiviCRM membership type by ID
 	 * @param int $type_id the numeric ID of the membership type
@@ -655,16 +655,16 @@ class Civi_Member_Sync_CiviCRM {
 		// --<
 		return $name;
 		
-	}  
-
-
-
+	}
+	
+	
+	
 	/**
 	 * Get role/membership names
 	 * @param string $values Serialised array of status rule IDs
 	 * @return string $status_rules The list of status rules, one per line
 	 */
-	public function get_current_status_rules( $values ) {  
+	public function get_current_status_rules( $values ) {
 		
 		// init return
 		$status_rules = '';
@@ -683,16 +683,16 @@ class Civi_Member_Sync_CiviCRM {
 		// --<
 		return $status_rules;
 		
-	}  
-
-
-
+	}
+	
+	
+	
 	/**
 	 * Get membership status rules for a particular item
 	 * @param string $values Serialised array of status rule IDs
 	 * @return array $rules_array The list of membership status rules for this item
 	 */
-	public function get_current_status_rules_array( $values ) {  
+	public function get_current_status_rules_array( $values ) {
 	 
 		// get membership status rules
 		$status_rules = $this->get_status_rules();
@@ -722,7 +722,7 @@ class Civi_Member_Sync_CiviCRM {
 		// --<
 		return $rules_array;
 		
-	}  
+	}
 
 
 

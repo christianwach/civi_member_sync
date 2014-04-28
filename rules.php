@@ -68,10 +68,10 @@
 						
 						?>
 					</select>
-				</td>  
+				</td>
 			</tr>
 			
-			<tr class="form-field form-required">  
+			<tr class="form-field form-required">
 				<th scope="row"><label class="wp_role_label" for="wp_role"><?php _e( 'Select a WordPress Role', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 					<select name="wp_role" id="wp_role" class="required">
@@ -94,8 +94,8 @@
 					
 						?>
 					</select>
-				</td>  
-			</tr>                
+				</td>
+			</tr>
 
 			<tr>
 				<th scope="row"><label class="current_label" for="current"><?php _e( 'Current Status', 'civi_member_sync' ); ?> *</label></th>
@@ -175,8 +175,8 @@
 				</td>
 			</tr>
 			
-		</table>  
-
+		</table>
+		
 		<?php
 		
 		// add a hidden element depending on mode

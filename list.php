@@ -56,12 +56,12 @@ if ( isset( $this->civi->errors ) AND is_array( $this->civi->errors ) ) {
 			<th class="manage-column column-role" id="role" scope="col"><?php _e( 'Expired Codes', 'civi_member_sync' ); ?></th>
 			<th class="manage-column column-role" id="role" scope="col"><?php _e( 'Expiry Assign Role', 'civi_member_sync' ); ?></th>
 		</tr>
-	</thead>    
+	</thead>
 
 	<tbody class="civi_member_sync_table" id="civi_member_sync_list">
 		<?php
 		
-		foreach( $select AS $key => $value ) { 
+		foreach( $select AS $key => $value ) {
 			
 			// construct URLs for this item
 			$edit_url = $rules_url . '&q=edit&id='.$value->id;
@@ -72,22 +72,22 @@ if ( isset( $this->civi->errors ) AND is_array( $this->civi->errors ) ) {
 			);
 			
 			?>
-			<tr>   
+			<tr> 
 				<td>
 					<?php echo $this->civi->get_membership_name_by_id( $value->civi_mem_type ); ?><br />
 					<div class="row-actions">
 						<span class="edit"><a href="<?php echo $edit_url; ?>"><?php _e( 'Edit', 'civi_member_sync' ); ?></a> | </span>
-						<span class="delete"><a href="<?php echo $delete_url; ?>" class="submitdelete"><?php _e( 'Delete', 'civi_member_sync' ); ?></a></span>
+						<span class="delete"><a href="<?php echo $delete_url; ?>" class="submitdelete"><?php _e( 'Delete', 'civi_member_sync' );?></a></span>
 					</div>
 				</td>
-				<td><?php echo $value->wp_role; ?></td>   
+				<td><?php echo $value->wp_role; ?></td>
 				<td><?php echo $this->civi->get_current_status_rules( $value->current_rule ); ?></td>
 				<td><?php echo $this->civi->get_current_status_rules( $value->expiry_rule );?></td>
 				<td><?php echo $value->expire_wp_role; ?></td>
-			</tr> 
-			<?php 
+			</tr>
+			<?php
 		
-		} 
+		}
 		
 		?>
 	</tbody>

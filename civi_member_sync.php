@@ -17,7 +17,7 @@ Based heavily on:
 Refactored, rewritten and extended by Christian Wach <needle@haystack.co.uk>
 
 --------------------------------------------------------------------------------
-*/  
+*/
 
 
 
@@ -80,7 +80,7 @@ class Civi_Member_Sync {
 	
 		// --<
 		return $this;
-
+		
 	}
 	
 	
@@ -92,7 +92,7 @@ class Civi_Member_Sync {
 		
 		// only use, if we have it...
 		if( function_exists( 'load_plugin_textdomain' ) ) {
-	
+		
 			// there are no translations as yet, but they can now be added
 			load_plugin_textdomain(
 			
@@ -104,7 +104,7 @@ class Civi_Member_Sync {
 				
 				// relative path to directory containing translation files
 				dirname( plugin_basename( CIVI_MEMBER_SYNC_PLUGIN_FILE ) ) . '/languages/'
-	
+				
 			);
 			
 		}
@@ -118,7 +118,7 @@ class Civi_Member_Sync {
 	 * @return nothing
 	 */
 	public function install_db() {
-
+	
 		// access database object
 		global $wpdb;
 		
@@ -151,7 +151,6 @@ class Civi_Member_Sync {
 	
 	
 	
-
 	/**
 	 * Register hooks when CiviCRM initialises
 	 * @return nothing
@@ -178,7 +177,7 @@ class Civi_Member_Sync {
 		
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
-
+		
 			// add options page
 			$this->list_page = add_options_page(
 				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // page title
@@ -187,12 +186,12 @@ class Civi_Member_Sync {
 				'civi_member_sync_list', // slug name
 				array( $this, 'rules_list' ) // callback
 			);
-		
+			
 			// add scripts and styles
 			add_action( 'admin_print_styles-'.$this->list_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->list_page, array( $this, 'admin_head' ), 50 );
 			
-			//  add first sub item
+			// add first sub item
 			$this->rules_page = add_submenu_page(
 				'civi_member_sync_list', // parent slug
 				__( 'CiviCRM Member Role Sync: Association Rules', 'civi_member_sync' ), // page title
@@ -201,13 +200,13 @@ class Civi_Member_Sync {
 				'civi_member_sync_rules', // slug name
 				array( $this, 'rules_add_edit' ) // callback
 			);
-		
+			
 			// add scripts and styles
 			add_action( 'admin_print_scripts-'.$this->rules_page, array( $this, 'admin_js' ) );
 			add_action( 'admin_print_styles-'.$this->rules_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->rules_page, array( $this, 'admin_head' ), 50 );
 			
-			//  add second sub item
+			// add second sub item
 			$this->sync_page = add_submenu_page(
 				'civi_member_sync_list', // parent slug
 				__( 'CiviCRM Member Role Sync: Manual Sync', 'civi_member_sync' ), // page title
@@ -216,11 +215,11 @@ class Civi_Member_Sync {
 				'civi_member_sync_manual_sync', // slug name
 				array( $this, 'rules_sync' ) // callback
 			);
-		
+			
 			// add scripts and styles
 			add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
-
+			
 			// try and update options
 			$saved = $this->admin_update();
 			
@@ -246,7 +245,7 @@ class Civi_Member_Sync {
 	}
 	
 	
-		
+	
 	/** 
 	 * Enqueue plugin options page css
 	 */
@@ -284,9 +283,9 @@ class Civi_Member_Sync {
 		);
 		
 	}
-
-
-
+	
+	
+	
 	/** 
 	 * @description: adds help copy to admin page in WP3.3+
 	 * @todo: 
@@ -310,7 +309,7 @@ class Civi_Member_Sync {
 		
 		// --<
 		return $screen;
-
+		
 	}
 	
 	
@@ -326,7 +325,7 @@ class Civi_Member_Sync {
 		
 		// --<
 		return $help;
-
+		
 	}
 	
 	
@@ -340,7 +339,7 @@ class Civi_Member_Sync {
 		// init result
 		$result = false;
 		
-	 	// was the rules form submitted?
+		// was the rules form submitted?
 		if( isset( $_POST[ 'civi_member_sync_rules_submit' ] ) ) {
 			$result = $this->civi->update_rules();
 		}
@@ -349,7 +348,7 @@ class Civi_Member_Sync {
 		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
 			$result = $this->civi->do_manual_sync();
 		}
-
+		
 		// was a delete link clicked?
 		if ( isset( $_GET['syncrule'] ) AND $_GET['syncrule'] == 'delete' ) {
 			if ( !empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
@@ -372,19 +371,19 @@ class Civi_Member_Sync {
 		
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
-
+		
 			// access database object
 			global $wpdb;
-
+			
 			// get admin page URLs
 			$list_url = menu_page_url( 'civi_member_sync_list', false );
 			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
 			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
-
+			
 			// get tabular data
 			$table_name = $wpdb->prefix . 'civi_member_sync';
 			$select = $wpdb->get_results( "SELECT * FROM $table_name" );
-
+			
 			// include template file
 			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'list.php' );
 		
@@ -393,7 +392,7 @@ class Civi_Member_Sync {
 	}
 	
 	
-		
+	
 	/** 
 	 * Show civi_member_sync_rules admin page
 	 * @return nothing
@@ -423,12 +422,12 @@ class Civi_Member_Sync {
 					
 					// set vars for populating form
 					$wp_role = $select->wp_role; 
-					$civi_member_type = $select->civi_mem_type;  
+					$civi_member_type = $select->civi_mem_type;
 					$current_rule = unserialize( $select->current_rule );
 					$expiry_rule = unserialize( $select->expiry_rule );
 					$expired_wp_role = $select->expire_wp_role; 
 				
-				}      
+				}
 			}
 			
 			// include template file
@@ -485,7 +484,7 @@ class Civi_Member_Sync {
 
 
 
- 
+
 
 
 // declare as global for external reference
@@ -495,7 +494,7 @@ global $civi_member_sync;
 $civi_member_sync = new Civi_Member_Sync;
 
 // plugin activation
-register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );    
+register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );
 
 // uninstall uses the 'uninstall.php' method
 // see: http://codex.wordpress.org/Function_Reference/register_uninstall_hook
@@ -509,8 +508,8 @@ register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );
  * @return array $links The list of plugin links
  */
 function civi_member_sync_plugin_add_settings_link( $links ) {
-  	$links[] = '<a href="admin.php?page=civi_member_sync_list">' . __( 'Settings', 'civi_member_sync' ) . '</a>';
-  	return $links;
+	$links[] = '<a href="admin.php?page=civi_member_sync_list">' . __( 'Settings', 'civi_member_sync' ) . '</a>';
+	return $links;
 }
 
 // contstriuct filter
