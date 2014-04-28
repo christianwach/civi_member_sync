@@ -72,15 +72,15 @@ if ( isset( $this->civi->errors ) AND is_array( $this->civi->errors ) ) {
 			?>
 			<tr>   
 				<td>
-					<?php echo $this->civi->get_names( $value->civi_mem_type, $membership_type ); ?><br />
+					<?php echo $this->civi->get_membership_name_by_id( $value->civi_mem_type ); ?><br />
 					<div class="row-actions">
 						<span class="edit"><a href="<?php echo $edit_url; ?>"><?php _e( 'Edit', 'civi_member_sync' ); ?></a> | </span>
 						<span class="delete"><a href="<?php echo $delete_url; ?>" class="submitdelete"><?php _e( 'Delete', 'civi_member_sync' ); ?></a></span>
 					</div>
 				</td>
 				<td><?php echo $value->wp_role; ?></td>   
-				<td><?php echo $this->civi->get_names( $value->current_rule, $membership_status ); ?></td>
-				<td><?php echo $this->civi->get_names( $value->expiry_rule, $membership_status );?></td>
+				<td><?php echo $this->civi->get_current_status_rules( $value->current_rule ); ?></td>
+				<td><?php echo $this->civi->get_current_status_rules( $value->expiry_rule );?></td>
 				<td><?php echo $value->expire_wp_role; ?></td>
 			</tr> 
 			<?php 

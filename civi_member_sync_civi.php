@@ -565,11 +565,14 @@ class Civi_Member_Sync_CiviCRM {
 	 */
 	public function get_types() {
 		
+		// only calculate once
+		if ( isset( $this->membership_types ) ) { return $this->membership_types; }
+		
 		// init return
-		$membership_type = array();
+		$this->membership_types = array();
 		
 		// return empty array if no CiviCRM
-		if ( ! civi_wp()->initialize() ) return $membership_type;
+		if ( ! civi_wp()->initialize() ) return array();
 		
 		// get membership details
 		$membership_type_details = civicrm_api( 'MembershipType', 'get', array(
@@ -579,27 +582,30 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// construct array of types
 		foreach( $membership_type_details['values'] AS $key => $values ) {
-			$membership_type[$values['id']] = $values['name']; 
+			$this->membership_types[$values['id']] = $values['name']; 
 		}
 		
 		// --<
-		return $membership_type;
+		return $this->membership_types;
 
 	}  
 
 
 
 	/**
-	 * Get membership statuses
-	 * @return array $membership_status List of statuses, key is ID, value is name
+	 * Get membership status rules
+	 * @return array $membership_status List of status rules, key is ID, value is name
 	 */
-	public function get_statuses() {
+	public function get_status_rules() {
 	
+		// only calculate once
+		if ( isset( $this->membership_status_rules ) ) { return $this->membership_status_rules; }
+		
 		// init return
-		$membership_status = array();
+		$this->membership_status_rules = array();
 		
 		// return empty array if no CiviCRM
-		if ( ! civi_wp()->initialize() ) return $membership_status;
+		if ( ! civi_wp()->initialize() ) return array();
 		
 		// get membership details
 		$membership_status_details = civicrm_api( 'MembershipStatus', 'get', array(
@@ -607,48 +613,114 @@ class Civi_Member_Sync_CiviCRM {
 			'sequential' => '1',
 		));
 		
-		// construct array of statuses
+		// construct array of status rules
 		foreach( $membership_status_details['values'] AS $key => $values ) {
-			$membership_status[$values['id']] = $values['name']; 
+			$this->membership_status_rules[$values['id']] = $values['name']; 
 		}
 		
 		// --<
-		return $membership_status;
+		return $this->membership_status_rules;
 
 	}  
 
 
 
 	/**
-	 * Get role/membership names
-	 * @param string $values Serialised array
-	 * @param array $memArray An array of memberships
-	 * @return string $current_roles The list of membership names, one per line
+	 * Get name of CiviCRM membership type by ID
+	 * @param int $type_id the numeric ID of the membership type
+	 * @return string $name The name of the membership type
 	 */
-	public function get_names( $values, $memArray ) {  
-	 
-		$memArray = array_flip( $memArray );
+	public function get_membership_name_by_id( $type_id = 0 ) {
 		
-		// init current rule (look again at this - I don't like suppressing errors)
-		$current_rule = @unserialize( $values );
-		if ( empty( $current_rule ) ) {
-			$current_rule = $values; 
-		}
+		// sanity checks
+		if ( ! is_numeric( $type_id ) ) { return false; }
+		if ( $type_id === 0 ) { return false; }
+		
+		// init return
+		$name = '';
+		
+		// get membership types
+		$membership_types = $this->get_types();
+		
+		// sanity checks
+		if ( !is_array( $membership_types ) ) { return false; }
+		if ( count( $membership_types ) == 0 ) { return false; }
+		
+		// flip for easier searching
+		$membership_types = array_flip( $membership_types );
 		
 		// init current roles
-		$current_roles = ''; 
-		if ( !empty( $current_rule ) ) { 
-			if ( is_array( $current_rule ) ) {    
-				foreach( $current_rule as $ckey => $cvalue ) {
-					$current_roles .= array_search( $ckey, $memArray ) . '<br>';
+		$name = array_search( $type_id, $membership_types );
+		
+		// --<
+		return $name;
+		
+	}  
+
+
+
+	/**
+	 * Get role/membership names
+	 * @param string $values Serialised array of status rule IDs
+	 * @return string $status_rules The list of status rules, one per line
+	 */
+	public function get_current_status_rules( $values ) {  
+		
+		// init return
+		$status_rules = '';
+		
+		// get current rules for this item
+		$current_rules = $this->get_current_status_rules_array( $values );
+		
+		// if there are some...
+		if ( $current_rules !== false AND is_array( $rules_array ) ) {
+			
+			// separate with line break
+			$status_rules = implode( '<br>', $current_rules );
+			
+		}
+	 
+		// --<
+		return $status_rules;
+		
+	}  
+
+
+
+	/**
+	 * Get membership status rules for a particular item
+	 * @param string $values Serialised array of status rule IDs
+	 * @return array $rules_array The list of membership status rules for this item
+	 */
+	public function get_current_status_rules_array( $values ) {  
+	 
+		// get membership status rules
+		$status_rules = $this->get_status_rules();
+		
+		// sanity checks
+		if ( !is_array( $status_rules ) ) { return false; }
+		if ( count( $status_rules ) == 0 ) { return false; }
+		
+		// flip for easier searching
+		$status_rules = array_flip( $status_rules );
+		
+		// init return
+		$rules_array = array();
+		
+		// init current rule
+		$current_rule = unserialize( $values );
+		
+		// build rules array for this item
+		if ( !empty( $current_rule ) ) {
+			if ( is_array( $current_rule ) ) {
+				foreach( $current_rule as $key => $value ) {
+					$rules_array[] = array_search( $key, $status_rules );
 				}
-			}else{
-				$current_roles = array_search( $current_rule, $memArray ) . '<br>';
-			}    
+			}
 		}
 		
 		// --<
-		return $current_roles;
+		return $rules_array;
 		
 	}  
 

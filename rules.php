@@ -49,10 +49,14 @@
 						<option value=""></option>
 						<?php
 						
-						foreach( $membership_type AS $key => $value ) { 
+						// get all membership types
+						$membership_types = $this->civi->get_types();
+						
+						// round we go...
+						foreach( $membership_types AS $key => $value ) { 
 							
 							$selected = '';
-							if( $key == $civi_member_type ) {
+							if( isset( $civi_member_type ) AND $key == $civi_member_type ) {
 								$selected = ' selected="selected"';
 							}
 							
@@ -78,7 +82,7 @@
 						foreach( $roles as $key => $value ) {
 						
 							$selected = '';
-							if( $value == $wp_role ) {
+							if( isset( $wp_role ) AND $value == $wp_role ) {
 								$selected = ' selected="selected"';
 							}
 							
@@ -96,10 +100,13 @@
 				<td>
 				<?php
 				
-				foreach( $membership_status AS $key => $value ) {
+				// get all membership status rules
+				$status_rules = $this->civi->get_status_rules();
+				
+				foreach( $status_rules AS $key => $value ) {
 					
 					$checked = '';
-					if ( !empty( $current_rule ) ) {
+					if ( isset( $current_rule ) AND !empty( $current_rule ) ) {
 						if ( array_search( $key, $current_rule ) ) {
 							$checked = ' checked="checked"';
 						}
@@ -121,10 +128,10 @@
 				<td>
 				<?php
 				
-				foreach( $membership_status AS $key => $value ) { 
+				foreach( $status_rules AS $key => $value ) { 
 					
 					$checked = '';
-					if ( !empty( $expiry_rule ) ) {
+					if ( isset( $expiry_rule ) AND !empty( $expiry_rule ) ) {
 						if ( array_search( $key, $expiry_rule ) ) {
 							$checked = ' checked="checked"';
 						}
@@ -153,7 +160,7 @@
 						foreach( $roles AS $key => $value ) {
 						
 							$selected = '';
-							if( $value == $expired_wp_role ) {
+							if( isset( $expired_wp_role ) AND $value == $expired_wp_role ) {
 								$selected = ' selected="selected"';
 							}
 							

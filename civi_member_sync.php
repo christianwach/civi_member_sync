@@ -376,10 +376,6 @@ class Civi_Member_Sync {
 			// access database object
 			global $wpdb;
 
-			// get membership data
-			$membership_type = $this->civi->get_types();
-			$membership_status = $this->civi->get_statuses();
-
 			// get admin page URLs
 			$list_url = menu_page_url( 'civi_member_sync_list', false );
 			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
@@ -406,10 +402,6 @@ class Civi_Member_Sync {
 	
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
-			
-			// get membership data
-			$membership_type = $this->civi->get_types();
-			$membership_status = $this->civi->get_statuses();
 			
 			// get admin page URLs
 			$list_url = menu_page_url( 'civi_member_sync_list', false );
