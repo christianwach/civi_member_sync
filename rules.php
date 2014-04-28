@@ -108,7 +108,7 @@
 				foreach( $status_rules AS $key => $value ) {
 					
 					$checked = '';
-					if ( isset( $current_rule ) AND !empty( $current_rule ) ) {
+					if ( isset( $current_rule ) AND ! empty( $current_rule ) ) {
 						if ( array_search( $key, $current_rule ) ) {
 							$checked = ' checked="checked"';
 						}
@@ -133,7 +133,7 @@
 				foreach( $status_rules AS $key => $value ) { 
 					
 					$checked = '';
-					if ( isset( $expiry_rule ) AND !empty( $expiry_rule ) ) {
+					if ( isset( $expiry_rule ) AND ! empty( $expiry_rule ) ) {
 						if ( array_search( $key, $expiry_rule ) ) {
 							$checked = ' checked="checked"';
 						}

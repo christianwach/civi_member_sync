@@ -31,11 +31,11 @@ define( 'CIVI_MEMBER_SYNC_DB_VERSION', '1.0' );
 define( 'CIVI_MEMBER_SYNC_PLUGIN_FILE', __FILE__ );
 
 // store URL to this plugin's directory
-if ( !defined( 'CIVI_MEMBER_SYNC_PLUGIN_URL' ) ) {
+if ( ! defined( 'CIVI_MEMBER_SYNC_PLUGIN_URL' ) ) {
 	define( 'CIVI_MEMBER_SYNC_PLUGIN_URL', plugin_dir_url( CIVI_MEMBER_SYNC_PLUGIN_FILE ) );
 }
 // store PATH to this plugin's directory
-if ( !defined( 'CIVI_MEMBER_SYNC_PLUGIN_PATH' ) ) {
+if ( ! defined( 'CIVI_MEMBER_SYNC_PLUGIN_PATH' ) ) {
 	define( 'CIVI_MEMBER_SYNC_PLUGIN_PATH', plugin_dir_path( CIVI_MEMBER_SYNC_PLUGIN_FILE ) );
 }
 
@@ -296,7 +296,7 @@ class Civi_Member_Sync {
 		//print_r( $screen ); die();
 		
 		// kick out if not our screen
-		if ( $screen->id != $this->list_page ) return;
+		if ( $screen->id != $this->list_page ) { return; }
 		
 		// add a tab - we can add more later
 		$screen->add_help_tab( array(
@@ -346,7 +346,7 @@ class Civi_Member_Sync {
 		
 		// was a delete link clicked?
 		if ( isset( $_GET['syncrule'] ) AND $_GET['syncrule'] == 'delete' ) {
-			if ( !empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
+			if ( ! empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
 				$result = $this->civi->delete_rule();
 			}
 		}
