@@ -1,10 +1,10 @@
-# Copyright (C) 2014 Tadpole CiviMember Role Synchronize
-# This file is distributed under the same license as the Tadpole CiviMember Role Synchronize package.
+# Copyright (C) 2014 CiviCRM Member Role Sync
+# This file is distributed under the same license as the CiviCRM Member Role Sync package.
 msgid ""
 msgstr ""
-"Project-Id-Version: Tadpole CiviMember Role Synchronize 1.0\n"
+"Project-Id-Version: CiviCRM Member Role Sync 2.0\n"
 "Report-Msgid-Bugs-To: http://wordpress.org/tag/civi_member_sync\n"
-"POT-Creation-Date: 2014-04-23 14:22:36+00:00\n"
+"POT-Creation-Date: 2014-04-28 23:59:05+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -12,37 +12,177 @@ msgstr ""
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 
-#: civi_member_sync.php:368 civi_member_sync.php:369 civi_member_sync.php:378
-msgid "CiviMember Role Sync"
+#: civi_member_sync.php:183 civi_member_sync.php:184 civi_member_sync.php:305
+msgid "CiviCRM Member Role Sync"
 msgstr ""
 
-#: civi_member_sync.php:379 civi_member_sync.php:388
-msgid "List of Rules"
+#: civi_member_sync.php:197
+msgid "CiviCRM Member Role Sync: Association Rules"
 msgstr ""
 
-#: civi_member_sync.php:387
-msgid "CiviMember Role Manual Sync"
+#: civi_member_sync.php:198 list.php:5 manual_sync.php:5 rules.php:5
+msgid "Association Rules"
 msgstr ""
 
-#: civi_member_sync.php:439
+#: civi_member_sync.php:212
+msgid "CiviCRM Member Role Sync: Manual Sync"
+msgstr ""
+
+#: civi_member_sync.php:213
+msgid "Manual Sync"
+msgstr ""
+
+#: civi_member_sync.php:324
+msgid "For further information about using CiviCRM Member Role Sync, please refer to the README.md that comes with this plugin."
+msgstr ""
+
+#: civi_member_sync.php:511
 msgid "Settings"
 msgstr ""
+
+#: civi_member_sync_civi.php:33
+msgid "Please select a CiviCRM Membership Type"
+msgstr ""
+
+#: civi_member_sync_civi.php:34
+msgid "Please select a WordPress Role."
+msgstr ""
+
+#: civi_member_sync_civi.php:35
+msgid "Please select a Current Status"
+msgstr ""
+
+#: civi_member_sync_civi.php:36
+msgid "Please select an Expire Status"
+msgstr ""
+
+#: civi_member_sync_civi.php:37
+msgid "Please select a WordPress Expiry Role"
+msgstr ""
+
+#: civi_member_sync_civi.php:38
+msgid "You can not have the same Status Rule registered as both \"Current\" and \"Expired\""
+msgstr ""
+
+#: civi_member_sync_civi.php:41
+msgid "Could not delete Association Rule"
+msgstr ""
+
+#: civi_member_sync_civi.php:586
+msgid "Cheating, eh?"
+msgstr ""
+
+#: list.php:5 manual_sync.php:5 rules.php:5
+msgid "Manual Synchronize"
+msgstr ""
+
+#: list.php:7
+msgid "Add New"
+msgstr ""
+
+#: list.php:18
+msgid "Association Rule updated."
+msgstr ""
+
+#: list.php:21
+msgid "Association Rule added."
+msgstr ""
+
+#: list.php:24
+msgid "Association Rule deleted."
+msgstr ""
+
+#: list.php:53
+msgid "Civi Membership Type"
+msgstr ""
+
+#: list.php:54
+msgid "WordPress Role"
+msgstr ""
+
+#: list.php:55
+msgid "Current Codes"
+msgstr ""
+
+#: list.php:56
+msgid "Expired Codes"
+msgstr ""
+
+#: list.php:57
+msgid "Expiry Assign Role"
+msgstr ""
+
+#: list.php:79
+msgid "Edit"
+msgstr ""
+
+#: list.php:80
+msgid "Delete"
+msgstr ""
+
+#: manual_sync.php:11
+msgid "Sync completed."
+msgstr ""
+
+#: manual_sync.php:16
+msgid "Synchronize CiviMember Memberships and WordPress Roles using the available rules.<br> <em>Note:</em> if no association rules exist then no synchronization will take place."
+msgstr ""
+
+#: manual_sync.php:22
+msgid "Synchronize Now"
+msgstr ""
+
+#: rules.php:10
+msgid "Edit Association Rule"
+msgstr ""
+
+#: rules.php:12 rules.php:193
+msgid "Add Association Rule"
+msgstr ""
+
+#: rules.php:37
+msgid "Choose a CiviMember Membership Type and a WordPress Role below. This will associate that Membership Type with the WordPress Role. If you would like the have the same Membership Type associated with more than one WordPress Role, you will need to add a second association rule after you have completed this one."
+msgstr ""
+
+#: rules.php:48
+msgid "Select a CiviMember Membership Type"
+msgstr ""
+
+#: rules.php:75
+msgid "Select a WordPress Role"
+msgstr ""
+
+#: rules.php:101
+msgid "Current Status"
+msgstr ""
+
+#: rules.php:129
+msgid "Expire Status"
+msgstr ""
+
+#: rules.php:153
+msgid "Select a WordPress Expiry Role"
+msgstr ""
+
+#: rules.php:191
+msgid "Save Association Rule"
+msgstr ""
 #. Plugin Name of the plugin/theme
-msgid "Tadpole CiviMember Role Synchronize"
+msgid "CiviCRM Member Role Sync"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "https://tadpole.cc"
+msgid "https://github.com/christianwach/civi_member_sync"
 msgstr ""
 
 #. Description of the plugin/theme
-msgid "Plugin to syncronize members in CiviCRM with WordPress"
+msgid "Synchronize CiviCRM memberships with WordPress user roles"
 msgstr ""
 
 #. Author of the plugin/theme
-msgid "Jag Kandasamy and Tadpole Collective"
+msgid "Christian Wach"
 msgstr ""
 
 #. Author URI of the plugin/theme
-msgid "https://tadpole.cc"
+msgid "https://haystack.co.uk"
 msgstr ""
