@@ -77,6 +77,76 @@ class Civi_Member_Sync_CiviCRM {
 		// intercept CiviCRM membership add/edit form submission
 		add_action( 'civicrm_postProcess', array( $this, 'form_process' ), 10, 2 );
 		
+		//intercept a CiviCRM membership update
+		add_action( 'civicrm_post', array( $this, 'civi_membership_updated' ), 10, 4 );
+		
+	}
+	
+	
+	
+	/**
+	 * @description: update a WP user role when a CiviCRM membership is updated
+	 * @param string $op the type of database operation
+	 * @param string $objectName the type of object
+	 * @param integer $objectId the ID of the object
+	 * @param object $objectRef the object
+	 * @return nothing
+	 */
+	public function civi_membership_updated( $op, $objectName, $objectId, $objectRef ) {
+		
+		// target our object type
+		if ( $objectName != 'Membership' ) { return; }
+		
+		///*
+		print_r( array( 
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		)); die();
+		//*/
+		
+		// catch create and edit operations
+		if ( $op == 'edit' OR $op == 'create' ) {
+		
+			// kick out if not membership object
+			if ( ! is_a( $objectRef, 'CRM_Member_BAO_Membership' ) ) { return; }
+		
+			// kick out if we don't have a contact ID
+			if ( ! isset( $objectRef->contact_id ) ) { return; }
+		
+			// get WordPress user for this contact ID
+			$user = $this->get_wp_user( $objectRef->contact_id );
+		
+			// kick out if we don't receive a valid user
+			if ( ! is_a( $user, 'WP_User' ) ) { return; }
+			if ( ! $user->exists() ) { return; }
+		
+			// exclude admins
+			if ( is_super_admin( $user->ID ) OR $user->has_cap( 'delete_users' ) ) { return; }
+		
+			// get primary WP role
+			$user_role = $this->get_wp_role( $user );
+		
+			// reformat $objectRef as if it was an API return
+			$membership = array( 
+				'is_error' => 0,
+				'values' => array( (array) $objectRef ),
+			);
+		
+			// update WP role by membership
+			$success = $this->member_check( $objectRef->contact_id, $user, $user_role, $membership );
+			// do we care about success?
+		
+		}
+		
+		// catch delete operation
+		if ( $op == 'delete' ) {
+		
+			// do we assign the expired role?
+		
+		}
+		
 	}
 	
 	
@@ -225,9 +295,10 @@ class Civi_Member_Sync_CiviCRM {
 	 * @param int $civi_contact_id The numerical CiviCRM contact ID
 	 * @param WP_User $user WP_User object of the logged-in user.
 	 * @param string $user_role The primary role of the current WordPress user
+	 * @param array $membership_details The membership details of the current WordPress user
 	 * @return bool True if successful, false otherwise
 	 */
-	public function member_check( $civi_contact_id, $user, $user_role ) {
+	public function member_check( $civi_contact_id, $user, $user_role, $membership_details = false ) {
 		
 		// removed check for admin user - DO NOT call this for admins UNLESS 
 		// you're using a plugin that enables multiple roles
@@ -235,14 +306,19 @@ class Civi_Member_Sync_CiviCRM {
 		// kick out if no CiviCRM
 		if ( ! civi_wp()->initialize() ) { return false; }
 		
-		// get Civi membership details
-		$membership_details = civicrm_api( 'Membership', 'get', array(
-			'version' => '3',
-			'page' => 'CiviCRM',
-			'q' => 'civicrm/ajax/rest',
-			'sequential' => '1',
-			'contact_id' => $civi_contact_id,
-		));
+		// if we didn't get details passed, get them
+		if ( $membership_details === false ) {
+		
+			// get Civi membership details
+			$membership_details = civicrm_api( 'Membership', 'get', array(
+				'version' => '3',
+				'page' => 'CiviCRM',
+				'q' => 'civicrm/ajax/rest',
+				'sequential' => '1',
+				'contact_id' => $civi_contact_id,
+			));
+		
+		}
 		
 		// trace
 		//print_r( $membership_details ); die();
@@ -263,7 +339,7 @@ class Civi_Member_Sync_CiviCRM {
 				$membership_type_id = $value['membership_type_id'];
 				$status_id = $value['status_id'];
 			}
-			//print_r( $membership_type_id ); die();
+			//print_r( array( $membership_type_id, membership$status_id ) ); die();
 		
 			// kick out if something went wrong
 			if ( ! isset( $membership_type_id ) ) { return false; }
@@ -282,6 +358,7 @@ class Civi_Member_Sync_CiviCRM {
 			
 			/*
 			print_r( array(
+				'status_id' => $status_id,
 				'current_rule' => $current_rule,
 				'expiry_rule' => $expiry_rule,
 			) ); die();
@@ -748,6 +825,32 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// --<
 		return $civi_contact_id;
+		
+	}
+	
+	
+	
+	/**
+	 * Get a WordPress user for a Civi contact ID
+	 * @param int $contact_id The numeric CiviCRM contact ID
+	 * @return WP_User $user WP_User object for the WordPress user
+	 */
+	public function get_wp_user( $contact_id ) {
+		
+		// kick out if no CiviCRM
+		if ( ! civi_wp()->initialize() ) return false;
+		
+		// make sure Civi file is included
+		require_once 'CRM/Core/BAO/UFMatch.php';
+			
+		// search using Civi's logic
+		$user_id = CRM_Core_BAO_UFMatch::getUFId( $contact_id );
+		
+		// get user object
+		$user = new WP_User( $user_id );
+		
+		// --<
+		return $user;
 		
 	}
 	
