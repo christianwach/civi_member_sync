@@ -234,6 +234,9 @@ class Civi_Member_Sync_CiviCRM {
 					$membershipTypeID = $value['membership_type_id'];
 				}
 			}
+			
+			// kick out if no type found
+			if ( ! isset($membershipTypeID) ) { return; }
 
 			// fetching member sync association rule to the corsponding membership type 
 			$table_name = $wpdb->prefix . 'civi_member_sync';
@@ -537,7 +540,12 @@ class Civi_Member_Sync_CiviCRM {
 				// get WordPress role
 				$userData = get_userdata( $uid );
 				if ( !empty( $userData ) ) {
-					$currentRole = $userData->roles[0];
+					foreach ( $userData->roles as $role ) {
+						if ( $role ) {
+							$currentRole = $role;
+							break;
+						}
+					}
 				}
 
 				// check Civi membership status and assign WordPress role
@@ -613,14 +621,16 @@ class Civi_Member_Sync_CiviCRM {
 
 	/**
 	 * Get role/membership names
+	 * @param string $values Serialised array
+	 * @param array $memArray An array of memberships
 	 * @return string $current_roles The list of membership names, one per line
 	 */
 	public function get_names( $values, $memArray ) {  
 	 
 		$memArray = array_flip( $memArray );
 		
-		// init current rule
-		$current_rule = unserialize($values);
+		// init current rule (look again at this - I don't like suppressing errors)
+		$current_rule = @unserialize( $values );
 		if ( empty( $current_rule ) ) {
 			$current_rule = $values; 
 		}
