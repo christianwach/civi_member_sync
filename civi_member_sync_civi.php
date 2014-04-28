@@ -63,21 +63,50 @@ class Civi_Member_Sync_CiviCRM {
 		// add cron action (to be removed)
 		add_action( 'civi_member_sync_refresh', array( $this, 'sync_daily' ) );
 		
-		// add login/logout check (to be removed)
-		add_action( 'wp_login', array( $this, 'sync_check' ), 10, 2 );
-		add_action( 'wp_logout', array( $this, 'sync_check' ), 10, 2 );
+		// add login check (to be removed)
+		add_action( 'wp_login', array( $this, 'sync_on_login' ), 10, 2 );
+		
+		// add logout check (can't use 'wp_logout' action, as user no longer exists)
+		add_action( 'clear_auth_cookie', array( $this, 'sync_on_logout' ) );
+		
+		// not sure why you'd want this...
 		//add_action( 'profile_update', array( $this, 'sync_check' ), 10, 2 );
 		
 		// add in CiviCRM hooks, if they exist...
+		
+		// intercept CiviCRM membership edit form submission
+		add_action( 'civicrm_postProcess', array( $this, 'form_process' ), 10, 2 );
 		
 	}
 	
 	
 	
 	/**
-	* Schedule manual sync daily
-	* @return nothing
-	*/
+	 * Update a WordPress user role when a Civi membership is added
+	 * @param string $formName the CiviCRM form name
+	 * @param object $form the CiviCRM form object
+	 * @return nothing
+	 */
+	public function form_process( $formName, &$form ) {
+		
+		/*
+		print_r( array(
+			'formName' => $formName,
+			'form' => $form,
+		) ); die();
+		*/
+		
+		// kick out if not membership form
+		if ( ! is_a( $form, 'CRM_Member_Form_Membership' ) ) return;
+		
+	}
+	
+	
+	
+	/**
+	 * Schedule manual sync daily
+	 * @return nothing
+	 */
 	public function sync_daily() {
 		
 		// disable for now
@@ -90,14 +119,17 @@ class Civi_Member_Sync_CiviCRM {
 		require_once( 'CRM/Core/BAO/UFMatch.php' );
 		
 		// get all WordPress users
-		$users = get_users();
+		$users = get_users( array( 'all_with_meta' => true ) );
 		
 		// loop through all users (surely not!)
 		foreach( $users AS $user ) {
 			
-			// sanity check
-			$uid = $user->ID;
-			if ( empty( $uid ) ) {
+			// kick out if we don't receive a valid user
+			if ( ! is_a( $user, 'WP_User' ) ) { continue; }
+			if ( !$user->exists() ) { continue; }
+			
+			// exclude admins
+			if ( is_super_admin( $user->ID ) OR $user->has_cap( 'delete_users' ) ) {
 				continue;
 			}
 			
@@ -126,18 +158,96 @@ class Civi_Member_Sync_CiviCRM {
 					}
 				}
 				
-				// get WordPress role
-				$userData = get_userdata( $uid );
-				if ( !empty( $userData ) ) {
-					$currentRole = $userData->roles[0];
-				}
-				
 				// check membership status and assign role
-				$check = $this->member_check( $cid, $uid, $currentRole );
+				$check = $this->member_check( $cid, $user, $currentRole );
 				
 			}
 			
 		}
+		
+	}
+	
+	
+	
+	/**
+	 * Do Manual Sync of membership rules
+	 * @return bool $success True if successful, false otherwise
+	 */
+	public function do_manual_sync() {
+	
+		// check that we trust the source of the request
+		check_admin_referer( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' );
+		
+		// trace
+		print_r( $_POST ); die();
+		
+		// kick out if no CiviCRM
+		if ( ! civi_wp()->initialize() ) return;
+		
+		// make sure Civi file is included
+		require_once 'CRM/Core/BAO/UFMatch.php';
+		
+		// get all WordPress users
+		$users = get_users( array( 'all_with_meta' => true ) );
+		
+		// loop through all users
+		foreach( $users AS $user ) {
+			
+			// kick out if we don't receive a valid user
+			if ( ! is_a( $user, 'WP_User' ) ) { continue; }
+			if ( !$user->exists() ) { continue; }
+			
+			// get Civi contact
+			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = '$uid'";
+			$contact = CRM_Core_DAO::executeQuery($sql); 
+			
+			// did we get one?
+			if ( $contact->fetch() ) {
+				
+				// get membership details
+				$cid = $contact->contact_id;
+				$membership_details = civicrm_api( 'Membership', 'get', array(
+					'version' => '3',
+					'page' => 'CiviCRM',
+					'q' => 'civicrm/ajax/rest',
+					'sequential' => '1',
+					'contact_id' => $cid
+				));
+			 	
+			 	// did we get any?
+				if ( !empty( $membership_details['values'] ) ) {
+					foreach( $membership_details['values'] AS $key => $value ) {
+						$memStatusID = $value['status_id']; 
+						$membershipTypeID = $value['membership_type_id'];
+					}
+				}
+				
+				// get WordPress role
+				$current_role = $this->get_wp_role( $user );
+				
+				// check Civi membership status and assign WordPress role
+				$check = $this->member_check( $cid, $user, $current_role );
+				
+			}
+			
+		}
+		
+	}
+	
+	
+	
+	/**
+	 * Check user's membership record during logout
+	 * @return nothing
+	 */
+	public function sync_on_logout() {
+		
+		// get user
+		$user = wp_get_current_user();
+		$user_login = $user->user_login;
+		
+		// call login method
+		$this->sync_on_login( $user_login, $user );
 		
 	}
 	
@@ -145,146 +255,134 @@ class Civi_Member_Sync_CiviCRM {
 	
 	/**
 	 * Check user's membership record during login and logout
-	 * @return bool true if successful
+	 * @param string $user_login Logged in user's username
+	 * @param WP_User $user WP_User object of the logged-in user.
+	 * @return nothing
 	 */
-	public function sync_check( $user_login, $user ) {
+	public function sync_on_login( $user_login, $user ) {
 	
-		// disable for now
-		return;
+		// kick out if we don't receive a valid user
+		if ( ! is_a( $user, 'WP_User' ) ) return;
 		
-		// kick out if no CiviCRM
-		if ( ! civi_wp()->initialize() ) return;
+		// trace
+		//print_r( array( $user_login, $user ) ); die();
 		
-		// access globals
-		global $wpdb, $current_user;
+		// exclude admins
+		if ( is_super_admin( $user->ID ) OR $user->has_cap( 'delete_users' ) ) { return; }
 		
-		// get username in post while login (not needed now we're using the hook properly)
-		if ( !empty( $_POST['log'] ) ) {
-			$username = $_POST['log'];
-			$userDetails = $wpdb->get_results( "SELECT * FROM $wpdb->users WHERE user_login = '$username'" );
-			$currentUserID = $userDetails[0]->ID;
-		} else {
-			$currentUserID = $current_user->ID;
-		}
+		// get Civi contact ID
+		$civi_contact_id = $this->get_civi_contact_id( $user );
 		
-		// get current logged in user's role
-		$current_user_role = new WP_User( $currentUserID );
-		$current_user_role = $current_user_role->roles[0];
-		//echo $current_user_role . "\n";
+		// get primary WP role
+		$user_role = $this->get_wp_role( $user );
 		
-		// if not admin (better to use is_super_admin() function)
-		if ( $current_user_role != 'administrator' ) {
-		
-			// get user's civi contact id and check membership details
-			require_once 'CRM/Core/Config.php';
-			$config = CRM_Core_Config::singleton();
-			
-			require_once 'api/api.php';
-			$params = array(
-				'version' => '3',
-				'page' => 'CiviCRM',
-				'q' => 'civicrm/ajax/rest',
-				'sequential' => '1',
-				'uf_id' => $currentUserID
-			);
-			
-			$contactDetails = civicrm_api( 'UFMatch', 'get', $params );
-			
-			$contactID = $contactDetails['values'][0]['contact_id'];
-			if ( !empty( $contactID ) ) {
-				$member = $this->member_check( $contactID, $currentUserID, $current_user_role );
-			}
-			
-		}
-		
-		// --<
-		return true;
-		
+		// we *must* have that ID now...
+		$success = $this->member_check( $civi_contact_id, $user, $user_role );
+		// do we care about success?
+
 	}
 	
 	
 	
 	/**
 	 * Check membership record and assign WordPress role based on membership status
-	 * @param int $contactID The numerical CiviCRM contact ID
-	 * @param int $currentUserID The numerical ID of the current user
-	 * @param string $current_user_role The role of the current user
-	 * @return bool true if successful
+	 * @param int $civi_contact_id The numerical CiviCRM contact ID
+	 * @param WP_User $user WP_User object of the logged-in user.
+	 * @param string $user_role The primary role of the current WordPress user
+	 * @return bool True if successful, false otherwise
 	 */
-	public function member_check( $contactID, $currentUserID, $current_user_role ) {
+	public function member_check( $civi_contact_id, $user, $user_role ) {
 		
-		// access globals
-		global $wpdb, $user, $current_user;
+		// removed check for admin user - DO NOT call this for admins UNLESS 
+		// you're using a plugin that enables multiple roles
 		
-		if ( $current_user_role != 'administrator' ) {
+		// kick out if no CiviCRM
+		if ( ! civi_wp()->initialize() ) { return false; }
 		
-			// fetching membership details
-			$memDetails = civicrm_api( 'Membership', 'get', array(
-				'version' => '3',
-				'page' => 'CiviCRM',
-				'q' => 'civicrm/ajax/rest',
-				'sequential' => '1',
-				'contact_id' => $contactID
-			));
-			//print_r($memDetails); echo "\n";
-			
-			if ( !empty( $memDetails['values'] ) ) {
-				foreach( $memDetails['values'] AS $key => $value ) {
-					$memStatusID = $value['status_id'];
-					$membershipTypeID = $value['membership_type_id'];
-				}
+		// get Civi membership details
+		$membership_details = civicrm_api( 'Membership', 'get', array(
+			'version' => '3',
+			'page' => 'CiviCRM',
+			'q' => 'civicrm/ajax/rest',
+			'sequential' => '1',
+			'contact_id' => $civi_contact_id,
+		));
+		
+		// trace
+		//print_r( $membership_details ); die();
+		
+		// if we have membership details
+		if (
+			$membership_details['is_error'] == 0 AND 
+			isset( $membership_details['values'] ) AND 
+			count( $membership_details['values'] ) > 0 
+		) {
+		
+			// get membership type and status rule
+			foreach( $membership_details['values'] AS $value ) {
+				$memStatusID = $value['status_id'];
+				$membershipTypeID = $value['membership_type_id'];
 			}
-			
+			//print_r( $membershipTypeID ); die();
+		
 			// kick out if no type found
-			if ( ! isset($membershipTypeID) ) { return; }
+			if ( ! isset( $membershipTypeID ) ) { return false; }
+		
+			// get association rule for the corresponding membership type
+			$memSyncRulesDetails = $this->get_rule_by_type( $membershipTypeID );
+			//print_r( $memSyncRulesDetails ); die();
+		
+			// kick out if we have an error of some kind
+			if ( $memSyncRulesDetails === false ) { return false; }
+		
+			// get status rules
+			$current_rule = maybe_unserialize( $memSyncRulesDetails->current_rule );
+			print_r($current_rule); echo "\n";
 			
-			// fetching member sync association rule to the corsponding membership type
-			$table_name = $wpdb->prefix . 'civi_member_sync';
-			$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE civi_mem_type = %d", $membershipTypeID );
-			$memSyncRulesDetails = $wpdb->get_results( $sql ); 
-			//print_r($memSyncRulesDetails);
+			$expiry_rule = maybe_unserialize( $memSyncRulesDetails->expiry_rule );
+			print_r($expiry_rule); echo "\n";
+			die();
 			
-			if ( !empty( $memSyncRulesDetails ) ) {
-			
-				$current_rule = unserialize( $memSyncRulesDetails[0]->current_rule );
-				//print_r($current_rule); echo "\n";
+			// check membership status
+			if ( isset( $memStatusID ) && array_search( $memStatusID, $current_rule ) ) {
 				
-				$expiry_rule = unserialize( $memSyncRulesDetails[0]->expiry_rule );
-				//print_r($expiry_rule); echo "\n";
+				// get role for current status rule
+				$wp_role = strtolower( $memSyncRulesDetails->wp_role );
+				//print $wp_role;
 				
-				//checking membership status
-				if ( isset( $memStatusID ) && array_search( $memStatusID, $current_rule ) ) {
+				// does this have this role?
+				if ( $wp_role == $user_role ) {
 				
-					$wp_role = strtolower( $memSyncRulesDetails[0]->wp_role );
-					//print $wp_role;
-					
-					if ( $wp_role == $current_user_role ) {
-						//print 'current member, up to date';
-						return;
-					} else {
-						//print 'current member, update';
-						$wp_user_object = new WP_User( $currentUserID );
-						$wp_user_object->set_role( "$wp_role" ); 
-					}
+					//print 'current member, up to date';
+					return;
 					
 				} else {
 				
-					$wp_user_object = new WP_User( $currentUserID );
-					$expired_wp_role = strtolower( $memSyncRulesDetails[0]->expire_wp_role );
-					//print $expired_wp_role;
+					//print 'current member, update';
+					$user->set_role( "$wp_role" );
+					 
+				}
+			
+			} else {
+		
+				// get role for expired status rule
+				$expired_wp_role = strtolower( $memSyncRulesDetails[0]->expire_wp_role );
+				//print $expired_wp_role;
+			
+				if ( !empty( $expired_wp_role ) ) {
+				
+					//print 'expired member, update';
+					$user->set_role( "$expired_wp_role" );
 					
-					if ( !empty( $expired_wp_role ) ) {
-						//print 'expired member, update';
-						$wp_user_object->set_role( "$expired_wp_role" );
-					} else {
-						//print 'expired member, up to date';
-						$wp_user_object->set_role( '' );
-					}
+				} else {
+				
+					//print 'expired member, up to date';
+					$user->set_role( '' );
 					
 				}
-				
-			}
 			
+			}
+		
 		}
 		
 		// --<
@@ -295,10 +393,35 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 	/**
-	 * Update membership rules
+	 * Get a membership rule
 	 * @return bool $success True if successful, false otherwise
 	 */
-	public function update_rules() {
+	public function get_rule_by_type( $type ) {
+		
+		// access database object
+		global $wpdb;
+		
+		// construct table name
+		$table_name = $wpdb->prefix . 'civi_member_sync';
+		
+		// construct query
+		$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE civi_mem_type = %d", $type );
+		
+		// do query and return result if successful
+		if ( $row = $wpdb->get_row( $sql ) ) { return $row; }
+		
+		// return error
+		return false;
+		
+	}
+	
+	
+	
+	/**
+	 * Update a membership rule
+	 * @return bool $success True if successful, false otherwise
+	 */
+	public function update_rule() {
 		
 		// check that we trust the source of the data
 		check_admin_referer( 'civi_member_sync_rules_action', 'civi_member_sync_nonce' );
@@ -483,83 +606,6 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 	/**
-	 * Do Manual Sync of membership rules
-	 * @return bool $success True if successful, false otherwise
-	 */
-	public function do_manual_sync() {
-	
-		// check that we trust the source of the request
-		check_admin_referer( 'civi_member_sync_manual_sync_action', 'civi_member_sync_nonce' );
-		
-		// trace
-		print_r( $_POST ); die();
-		
-		// kick out if no CiviCRM
-		if ( ! civi_wp()->initialize() ) return;
-		
-		// make sure Civi file is included
-		require_once 'CRM/Core/BAO/UFMatch.php';
-		
-		// get all WordPress users
-		$users = get_users();
-		
-		// loop through all users
-		foreach( $users AS $user ) {
-			
-			// sanity check
-			$uid = $user->ID;
-			if ( empty( $uid ) ) {
-				continue;
-			}
-			
-			// get Civi contact
-			$sql = "SELECT * FROM civicrm_uf_match WHERE uf_id = '$uid'";
-			$contact = CRM_Core_DAO::executeQuery($sql); 
-			
-			// did we get one?
-			if ( $contact->fetch() ) {
-				
-				// get membership details
-				$cid = $contact->contact_id;
-				$memDetails = civicrm_api( 'Membership', 'get', array(
-					'version' => '3',
-					'page' => 'CiviCRM',
-					'q' => 'civicrm/ajax/rest',
-					'sequential' => '1',
-					'contact_id' => $cid
-				));
-			 	
-			 	// did we get any?
-				if ( !empty( $memDetails['values'] ) ) {
-					foreach( $memDetails['values'] AS $key => $value ) {
-						$memStatusID = $value['status_id']; 
-						$membershipTypeID = $value['membership_type_id'];
-					}
-				}
-				
-				// get WordPress role
-				$userData = get_userdata( $uid );
-				if ( !empty( $userData ) ) {
-					foreach ( $userData->roles as $role ) {
-						if ( $role ) {
-							$currentRole = $role;
-							break;
-						}
-					}
-				}
-				
-				// check Civi membership status and assign WordPress role
-				$check = $this->member_check( $cid, $uid, $currentRole );
-				
-			}
-			
-		}
-		
-	}
-	
-	
-	
-	/**
 	 * Get membership types
 	 * @return array $membership_type List of types, key is ID, value is name
 	 */
@@ -693,7 +739,7 @@ class Civi_Member_Sync_CiviCRM {
 	 * @return array $rules_array The list of membership status rules for this item
 	 */
 	public function get_current_status_rules_array( $values ) {
-	 
+	
 		// get membership status rules
 		$status_rules = $this->get_status_rules();
 		
@@ -708,7 +754,7 @@ class Civi_Member_Sync_CiviCRM {
 		$rules_array = array();
 		
 		// init current rule
-		$current_rule = unserialize( $values );
+		$current_rule = maybe_unserialize( $values );
 		
 		// build rules array for this item
 		if ( !empty( $current_rule ) ) {
@@ -726,6 +772,74 @@ class Civi_Member_Sync_CiviCRM {
 
 
 
+	/**
+	 * Get a Civi contact ID by WordPress user object
+	 * @param WP_User $user WP_User object of the logged-in user.
+	 * @return int $civi_contact_id The numerical CiviCRM contact ID
+	 */
+	public function get_civi_contact_id( $user ) {
+	
+		// kick out if no CiviCRM
+		if ( ! civi_wp()->initialize() ) return false;
+		
+		// make sure Civi file is included
+		require_once 'CRM/Core/BAO/UFMatch.php';
+			
+		// do initial search
+		$civi_contact_id = CRM_Core_BAO_UFMatch::getContactId( $user->ID );
+		if ( !$civi_contact_id ) {
+			
+			// sync this user
+			CRM_Core_BAO_UFMatch::synchronizeUFMatch(
+				$user, // user object
+				$user->ID, // ID
+				$user->user_mail, // unique identifier
+				'WordPress', // CMS
+				null, // status
+				'Individual', // contact type
+				null // is_login
+			);
+			
+			// get the Civi contact ID
+			$civi_contact_id = CRM_Core_BAO_UFMatch::getContactId( $user->id );
+			if ( !$civi_contact_id ) {
+				CRM_Core_Error::fatal();
+			}
+		
+		}
+		
+		// --<
+		return $civi_contact_id;
+		
+	}
+	
+	
+	
+	/**
+	 * Get WordPress user role
+	 * @param WP_User $user WP_User object of the logged-in user.
+	 * @return string $role WordPress user role
+	 */
+	public function get_wp_role( $user ) {
+	
+		// kick out if we don't receive a valid user
+		if ( ! is_a( $user, 'WP_User' ) ) return false;
+		
+		// roles is an array
+		foreach ( $user->roles AS $role ) {
+			
+			// return the first valid one (for now)
+			if ( $role ) { return $role; }
+			
+		}
+		
+		// fallback
+		return false;
+		
+	}
+	
+	
+		
 } // class ends
 
 

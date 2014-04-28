@@ -341,12 +341,7 @@ class Civi_Member_Sync {
 		
 		// was the rules form submitted?
 		if( isset( $_POST[ 'civi_member_sync_rules_submit' ] ) ) {
-			$result = $this->civi->update_rules();
-		}
-		
-		// was the Manual Sync form submitted?
-		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
-			$result = $this->civi->do_manual_sync();
+			$result = $this->civi->update_rule();
 		}
 		
 		// was a delete link clicked?
@@ -354,6 +349,11 @@ class Civi_Member_Sync {
 			if ( !empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
 				$result = $this->civi->delete_rule();
 			}
+		}
+		
+		// was the Manual Sync form submitted?
+		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
+			$result = $this->civi->do_manual_sync();
 		}
 		
 		// --<
@@ -423,8 +423,8 @@ class Civi_Member_Sync {
 					// set vars for populating form
 					$wp_role = $select->wp_role; 
 					$civi_member_type = $select->civi_mem_type;
-					$current_rule = unserialize( $select->current_rule );
-					$expiry_rule = unserialize( $select->expiry_rule );
+					$current_rule = maybe_unserialize( $select->current_rule );
+					$expiry_rule = maybe_unserialize( $select->expiry_rule );
 					$expired_wp_role = $select->expire_wp_role; 
 				
 				}
@@ -438,7 +438,7 @@ class Civi_Member_Sync {
 	}
 	
 	
-		
+	
 	/** 
 	 * Show civi_member_sync_manual_sync admin page
 	 * @return nothing
