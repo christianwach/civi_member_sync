@@ -405,6 +405,7 @@ class Civi_Member_Sync {
 			
 			// get admin page URLs
 			$list_url = menu_page_url( 'civi_member_sync_list', false );
+			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
 			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
 
 			// do we want to populate the form?
@@ -451,6 +452,7 @@ class Civi_Member_Sync {
 			// get admin page URLs
 			$list_url = menu_page_url( 'civi_member_sync_list', false );
 			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
+			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
 
 			// include template file
 			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'manual_sync.php' );

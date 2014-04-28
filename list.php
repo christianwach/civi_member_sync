@@ -2,7 +2,9 @@
 
 <div class="wrap">
 
-<h2><?php _e( 'Association Rules', 'civi_member_sync' ); ?> <a class="add-new-h2" href="<?php echo $rules_url; ?>"><?php _e( 'Add Association Rule', 'civi_member_sync' ); ?></a> <a class="add-new-h2" href="<?php echo $manual_sync_url; ?>"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a></h2> 
+<h2 class="nav-tab-wrapper"><a href="<?php echo $list_url; ?>" class="nav-tab nav-tab-active"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a href="<?php echo $manual_sync_url; ?>" class="nav-tab"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a></h2>
+
+<h3>All Association Rules <a class="add-new-h2" href="<?php echo $rules_url; ?>"><?php _e( 'Add New', 'civi_member_sync' ); ?></a></h3> 
 
 <?php
 

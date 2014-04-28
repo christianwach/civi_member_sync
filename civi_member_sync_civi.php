@@ -673,7 +673,7 @@ class Civi_Member_Sync_CiviCRM {
 		$current_rules = $this->get_current_status_rules_array( $values );
 		
 		// if there are some...
-		if ( $current_rules !== false AND is_array( $rules_array ) ) {
+		if ( $current_rules !== false AND is_array( $current_rules ) ) {
 			
 			// separate with line break
 			$status_rules = implode( '<br>', $current_rules );
