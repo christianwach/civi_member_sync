@@ -12,6 +12,9 @@ class Civi_Member_Sync_CiviCRM {
 	 * Properties
 	 */
 	
+	// parent object
+	public $parent_obj;
+	
 	// form error messages
 	public $error_strings;
 	
@@ -22,10 +25,14 @@ class Civi_Member_Sync_CiviCRM {
 	
 	/** 
 	 * Initialise this object
+	 * @param object $parent_obj The parent object
 	 * @return object
 	 */
-	function __construct() {
+	function __construct( $parent_obj ) {
 		
+		// store reference to parent
+		$this->parent_obj = $parent_obj;
+	
 		// define errors
 		$this->error_strings = array(
 			
@@ -55,30 +62,57 @@ class Civi_Member_Sync_CiviCRM {
 	 */
 	public function initialise() {
 	
-		// add schedule, if not already present (to be removed)
-		if ( ! wp_next_scheduled( 'civi_member_sync_refresh' ) ) {
-			wp_schedule_event( time(), 'daily', 'civi_member_sync_refresh' );
+		// get our schedule sync setting
+		$schedule = absint( $this->parent_obj->setting_get( 'schedule' ) );
+		
+		// add hooks if set
+		if ( $schedule === 1 ) {
+		
+			// get our interval setting
+			$interval = $this->parent_obj->setting_get( 'interval' );
+		
+			// sanity check
+			if ( ! empty( $interval ) ) {
+		
+				// add schedule, if not already present
+				if ( ! wp_next_scheduled( 'civi_member_sync_refresh' ) ) {
+					wp_schedule_event( time(), $interval, 'civi_member_sync_refresh' );
+				}
+		
+			}
+		
+			// add cron callback action
+			add_action( 'civi_member_sync_refresh', array( $this, 'sync_interval' ) );
+		
 		}
 		
-		// add cron action (to be removed)
-		add_action( 'civi_member_sync_refresh', array( $this, 'sync_daily' ) );
+		// get our login/logout sync setting
+		$login = absint( $this->parent_obj->setting_get( 'login' ) );
 		
-		// add login check (to be removed)
-		add_action( 'wp_login', array( $this, 'sync_user' ), 10, 2 );
+		// add hooks if set
+		if ( $login === 1 ) {
 		
-		// add logout check (can't use 'wp_logout' action, as user no longer exists)
-		add_action( 'clear_auth_cookie', array( $this, 'sync_on_logout' ) );
+			// add login check
+			add_action( 'wp_login', array( $this, 'sync_user' ), 10, 2 );
 		
-		// not sure why you'd want this...
-		//add_action( 'profile_update', array( $this, 'sync_check' ), 10, 2 );
+			// add logout check (can't use 'wp_logout' action, as user no longer exists)
+			add_action( 'clear_auth_cookie', array( $this, 'sync_on_logout' ) );
 		
-		// add in CiviCRM hooks, if they exist...
+		}
 		
-		// intercept CiviCRM membership add/edit form submission
-		add_action( 'civicrm_postProcess', array( $this, 'form_process' ), 10, 2 );
+		// get our civicrm sync setting
+		$civicrm = absint( $this->parent_obj->setting_get( 'civicrm' ) );
 		
-		//intercept a CiviCRM membership update
-		add_action( 'civicrm_post', array( $this, 'civi_membership_updated' ), 10, 4 );
+		// add hooks if set
+		if ( $civicrm === 1 ) {
+		
+			// intercept CiviCRM membership add/edit form submission
+			add_action( 'civicrm_postProcess', array( $this, 'form_process' ), 10, 2 );
+		
+			//intercept a CiviCRM membership update
+			add_action( 'civicrm_post', array( $this, 'civi_membership_updated' ), 10, 4 );
+		
+		}
 		
 	}
 	
@@ -174,10 +208,10 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 	/**
-	 * Schedule manual sync daily
+	 * Sync membership rules for all users when scheduled event is triggered
 	 * @return nothing
 	 */
-	public function sync_daily() {
+	public function sync_interval() {
 		
 		// disable for now
 		return;
@@ -881,6 +915,23 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 		
+	/**
+	 * Get all WordPress roles
+	 * @return WP_Roles
+	 */
+	function get_wp_roles() {
+		global $wp_roles;
+
+		// load roles if not set
+		if ( ! isset( $wp_roles ) ) {
+			$wp_roles = new WP_Roles();
+		}
+		
+		return $wp_roles;
+	}
+	
+	
+	
 } // class ends
 
 

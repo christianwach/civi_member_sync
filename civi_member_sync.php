@@ -57,6 +57,10 @@ class Civi_Member_Sync {
 	public $list_page;
 	public $rules_page;
 	public $sync_page;
+	public $settings_page;
+	
+	// settings
+	public $settings = array();
 	
 	
 	
@@ -76,7 +80,7 @@ class Civi_Member_Sync {
 		require( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'civi_member_sync_civi.php' );
 		
 		// initialise
-		$this->civi = new Civi_Member_Sync_CiviCRM;
+		$this->civi = new Civi_Member_Sync_CiviCRM( $this );
 	
 		// --<
 		return $this;
@@ -114,10 +118,12 @@ class Civi_Member_Sync {
 	
 	
 	/**
-	 * Create MySQL table to track membership sync
+	 * Perform plugin activation tasks
 	 * @return nothing
 	 */
-	public function install_db() {
+	public function activate() {
+		
+		// create MySQL table to track membership sync
 	
 		// access database object
 		global $wpdb;
@@ -144,9 +150,27 @@ class Civi_Member_Sync {
 		$success = maybe_create_table( $table_name, $create_ddl );
 		// do we care whether we're successful?
 		
+		// create plugin options
+		
 		// store version for later reference
 		add_option( 'civi_member_sync_db_version', CIVI_MEMBER_SYNC_DB_VERSION );
+		
+		// store default settings
+		add_option( 'civi_member_sync_settings', $this->settings_get_default() );
 	
+	}
+	
+	
+	
+	/**
+	 * Perform plugin deactivation tasks
+	 * @return nothing
+	 */
+	public function deactivate() {
+		
+		// remove scheduled hook
+		wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
+		
 	}
 	
 	
@@ -157,6 +181,9 @@ class Civi_Member_Sync {
 	 */
 	public function initialise() {
 	
+		// load settings array
+		$this->settings = get_option( 'civi_member_sync_settings', $this->settings );
+		
 		// add menu items
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) ); 
 		
@@ -165,6 +192,7 @@ class Civi_Member_Sync {
 		
 		// broadcast that we're up and running
 		do_action( 'civi_member_sync_initialised' );
+		
 	}
 	
 	
@@ -191,7 +219,7 @@ class Civi_Member_Sync {
 			add_action( 'admin_print_styles-'.$this->list_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->list_page, array( $this, 'admin_head' ), 50 );
 			
-			// add first sub item
+			// add list page
 			$this->rules_page = add_submenu_page(
 				'civi_member_sync_list', // parent slug
 				__( 'CiviCRM Member Role Sync: Association Rules', 'civi_member_sync' ), // page title
@@ -206,7 +234,7 @@ class Civi_Member_Sync {
 			add_action( 'admin_print_styles-'.$this->rules_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->rules_page, array( $this, 'admin_head' ), 50 );
 			
-			// add second sub item
+			// add manual sync page
 			$this->sync_page = add_submenu_page(
 				'civi_member_sync_list', // parent slug
 				__( 'CiviCRM Member Role Sync: Manual Sync', 'civi_member_sync' ), // page title
@@ -219,6 +247,20 @@ class Civi_Member_Sync {
 			// add scripts and styles
 			add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
 			add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
+			
+			// add settings page
+			$this->settings_page = add_submenu_page(
+				'civi_member_sync_list', // parent slug
+				__( 'CiviCRM Member Role Sync: Settings', 'civi_member_sync' ), // page title
+				__( 'Settings', 'civi_member_sync' ), // menu title
+				'manage_options', // required caps
+				'civi_member_sync_settings', // slug name
+				array( $this, 'rules_settings' ) // callback
+			);
+			
+			// add scripts and styles
+			add_action( 'admin_print_styles-'.$this->settings_page, array( $this, 'admin_css' ) );
+			add_action( 'admin_head-'.$this->settings_page, array( $this, 'admin_head' ), 50 );
 			
 			// try and update options
 			$saved = $this->admin_update();
@@ -331,39 +373,6 @@ class Civi_Member_Sync {
 	
 	
 	/** 
-	 * Save the settings set by the administrator
-	 * @return bool $result Success or failure
-	 */
-	public function admin_update() {
-	
-		// init result
-		$result = false;
-		
-		// was the rules form submitted?
-		if( isset( $_POST[ 'civi_member_sync_rules_submit' ] ) ) {
-			$result = $this->civi->update_rule();
-		}
-		
-		// was a delete link clicked?
-		if ( isset( $_GET['syncrule'] ) AND $_GET['syncrule'] == 'delete' ) {
-			if ( ! empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
-				$result = $this->civi->delete_rule();
-			}
-		}
-		
-		// was the Manual Sync form submitted?
-		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
-			$result = $this->civi->do_manual_sync();
-		}
-		
-		// --<
-		return $result;
-		
-	}
-	
-	
-	
-	/** 
 	 * Show civi_member_sync_list admin page
 	 * @return nothing
 	 */
@@ -372,13 +381,11 @@ class Civi_Member_Sync {
 		// check user permissions
 		if ( current_user_can('manage_options') ) {
 		
+			// get admin page URLs
+			$urls = $this->get_admin_urls(); 
+
 			// access database object
 			global $wpdb;
-			
-			// get admin page URLs
-			$list_url = menu_page_url( 'civi_member_sync_list', false );
-			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
-			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
 			
 			// get tabular data
 			$table_name = $wpdb->prefix . 'civi_member_sync';
@@ -403,9 +410,7 @@ class Civi_Member_Sync {
 		if ( current_user_can('manage_options') ) {
 			
 			// get admin page URLs
-			$list_url = menu_page_url( 'civi_member_sync_list', false );
-			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
-			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$urls = $this->get_admin_urls(); 
 
 			// do we want to populate the form?
 			if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
@@ -449,12 +454,43 @@ class Civi_Member_Sync {
 		if ( current_user_can('manage_options') ) {
 
 			// get admin page URLs
-			$list_url = menu_page_url( 'civi_member_sync_list', false );
-			$rules_url = menu_page_url( 'civi_member_sync_rules', false ); 
-			$manual_sync_url = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$urls = $this->get_admin_urls(); 
 
 			// include template file
 			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'manual_sync.php' );
+		
+		}
+		
+	}
+	
+	
+		
+	/** 
+	 * Show civi_member_sync_settings admin page
+	 * @return nothing
+	 */
+	public function rules_settings() {
+		
+		// check user permissions
+		if ( current_user_can('manage_options') ) {
+
+			// get admin page URLs
+			$urls = $this->get_admin_urls(); 
+
+			// get all schedules
+			$schedules = wp_get_schedules();
+			//print_r( $schedules ); die();
+			
+			// get our sync settings
+			$login = absint( $this->setting_get( 'login' ) );
+			$civicrm = absint( $this->setting_get( 'civicrm' ) );
+			$schedule = absint( $this->setting_get( 'schedule' ) );
+			
+			// get our interval setting
+			$interval = $this->setting_get( 'interval' );
+			
+			// include template file
+			include( CIVI_MEMBER_SYNC_PLUGIN_PATH . 'settings.php' );
 		
 		}
 		
@@ -480,6 +516,210 @@ class Civi_Member_Sync {
 	
 	
 	
+	/** 
+	 * Get admin page URLs
+	 * @return array $admin_urls The array of admin page URLs
+	 */
+	public function get_admin_urls() {
+		
+		// only calculate once
+		if ( isset( $this->urls ) ) { return $this->urls; }
+		
+		// init return
+		$this->urls = array();
+		
+		// get admin page URLs
+		$this->urls['list'] = menu_page_url( 'civi_member_sync_list', false );
+		$this->urls['rules'] = menu_page_url( 'civi_member_sync_rules', false ); 
+		$this->urls['manual_sync'] = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+		$this->urls['settings'] = menu_page_url( 'civi_member_sync_settings', false ); 
+		
+		// --<
+		return $this->urls;
+		
+	}
+	
+	
+	
+	/** 
+	 * Save the settings set by the administrator
+	 * @return bool $result Success or failure
+	 */
+	public function admin_update() {
+	
+		// init result
+		$result = false;
+		
+		// was the rules form submitted?
+		if( isset( $_POST[ 'civi_member_sync_rules_submit' ] ) ) {
+			$result = $this->civi->update_rule();
+		}
+		
+		// was a delete link clicked?
+		if ( isset( $_GET['syncrule'] ) AND $_GET['syncrule'] == 'delete' ) {
+			if ( ! empty( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
+				$result = $this->civi->delete_rule();
+			}
+		}
+		
+		// was the Manual Sync form submitted?
+		if( isset( $_POST[ 'civi_member_sync_manual_sync_submit' ] ) ) {
+			$result = $this->civi->do_manual_sync();
+		}
+		
+		// was the Settings form submitted?
+		if( isset( $_POST[ 'civi_member_sync_settings_submit' ] ) ) {
+			$result = $this->settings_update();
+		}
+		
+		// --<
+		return $result;
+		
+	}
+	
+	
+	
+	/**
+	 * Get default plugin settings
+	 * @return array $settings The array of settings, keyed by setting name
+	 */
+	public function settings_get_default() {
+	
+		// init return
+		$settings = array();
+		
+		// switch all sync settings on by default
+		$settings['login'] = 1;
+		$settings['civicrm'] = 1;
+		$settings['schedule'] = 1;
+		
+		// set default schedule interval
+		$settings['interval'] = 'daily';
+		
+		// allow filtering
+		return apply_filters( 'civi_member_sync_default_settings', $settings );
+	
+	}
+	
+	
+	
+	/**
+	 * Update plugin settings
+	 * @return nothing
+	 */
+	public function settings_update() {
+	
+		// check that we trust the source of the request
+		check_admin_referer( 'civi_member_sync_settings_action', 'civi_member_sync_nonce' );
+		
+		// login/logout sync enabled
+		if ( isset( $_POST['civi_member_sync_settings_login'] ) ) {
+			$settings_login = absint( $_POST['civi_member_sync_settings_login'] );
+			$this->setting_set( 'login', ( $settings_login ? 1 : 0 ) );
+		}
+		
+		// civicrm sync enabled
+		if ( isset( $_POST['civi_member_sync_settings_civicrm'] ) ) {
+			$settings_civicrm = absint( $_POST['civi_member_sync_settings_civicrm'] );
+			$this->setting_set( 'civicrm', ( $settings_civicrm ? 1 : 0 ) );
+		}
+		
+		// schedule sync enabled
+		if ( isset( $_POST['civi_member_sync_settings_schedule'] ) ) {
+			$settings_schedule = absint( $_POST['civi_member_sync_settings_schedule'] );
+			$this->setting_set( 'schedule', ( $settings_schedule ? 1 : 0 ) );
+		}
+		
+		// schedule interval
+		if ( isset( $_POST['civi_member_sync_settings_interval'] ) ) {
+		
+			// get value passed in
+			$settings_interval = esc_sql( trim( $_POST['civi_member_sync_settings_interval'] ) );
+			
+			// get existing value
+			$existing = $this->setting_get( 'interval' );
+			
+			// has it changed?
+			if ( $settings_interval != $existing ) {
+				
+				// get next scheduled event
+				$timestamp = wp_next_scheduled( 'civi_member_sync_refresh' );
+				
+				// unschedule it if we get one
+				if ( $timestamp !== false ) {
+					wp_unschedule_event( $timestamp, 'civi_member_sync_refresh' );
+				}
+			
+				// it's not clear whether wp_unschedule_event() clears everything,
+				// so let's remove existing scheduled hook as well
+				wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
+		
+				// now add new scheduled event
+				wp_schedule_event( time(), $settings_interval, 'civi_member_sync_refresh' );
+				
+			}
+			
+			// set new value whatever (for now)
+			$this->setting_set( 'interval', $settings_interval );
+			
+		}
+		
+		// save settings
+		$this->settings_save();
+		
+	}
+	
+	
+	
+	/** 
+	 * Save the plugin's settings array
+	 * @return bool $result True if setting value has changed, false if not or if update failed
+	 */
+	function settings_save() {
+		
+		// update WordPress option and return result
+		return update_option( 'civi_member_sync_settings', $this->settings );
+		
+	}
+	
+	
+	
+	/** 
+	 * Return a value for a specified setting
+	 * @return mixed $setting The value of the setting
+	 */
+	function setting_get( $setting_name = '', $default = false ) {
+	
+		// sanity check
+		if ( $setting_name == '' ) {
+			die( __( 'You must supply a setting to setting_get()', 'civi_member_sync' ) );
+		}
+	
+		// get setting
+		return ( array_key_exists( $setting_name, $this->settings ) ) ? $this->settings[ $setting_name ] : $default;
+		
+	}
+	
+	
+	
+	/** 
+	 * Set a value for a specified setting
+	 * @return nothing
+	 */
+	function setting_set( $setting_name = '', $value = '' ) {
+	
+		// sanity check
+		if ( $setting_name == '' ) {
+			die( __( 'You must supply a setting to setting_set()', 'civi_member_sync' ) );
+		}
+	
+		// set setting
+		$this->settings[ $setting_name ] = $value;
+		
+	}
+	
+	
+	
 } // class ends
 
 
@@ -494,7 +734,10 @@ global $civi_member_sync;
 $civi_member_sync = new Civi_Member_Sync;
 
 // plugin activation
-register_activation_hook( __FILE__, array( $civi_member_sync, 'install_db' ) );
+register_activation_hook( __FILE__, array( $civi_member_sync, 'activate' ) );
+
+// plugin deactivation
+register_deactivation_hook( __FILE__, array( $civi_member_sync, 'deactivate' ) );
 
 // uninstall uses the 'uninstall.php' method
 // see: http://codex.wordpress.org/Function_Reference/register_uninstall_hook

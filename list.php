@@ -2,9 +2,9 @@
 
 <div class="wrap">
 
-<h2 class="nav-tab-wrapper"><a href="<?php echo $list_url; ?>" class="nav-tab nav-tab-active"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a href="<?php echo $manual_sync_url; ?>" class="nav-tab"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a></h2>
+<h2 class="nav-tab-wrapper"><a href="<?php echo $urls['list']; ?>" class="nav-tab nav-tab-active"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a href="<?php echo $urls['manual_sync']; ?>" class="nav-tab"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a> <a href="<?php echo $urls['settings']; ?>" class="nav-tab"><?php _e( 'Settings', 'civi_member_sync' ); ?></a></h2>
 
-<h3>All Association Rules <a class="add-new-h2" href="<?php echo $rules_url; ?>"><?php _e( 'Add New', 'civi_member_sync' ); ?></a></h3> 
+<h3><?php _e( 'All Association Rules', 'civi_member_sync' ); ?> <a class="add-new-h2" href="<?php echo $urls['rules']; ?>"><?php _e( 'Add New', 'civi_member_sync' ); ?></a></h3> 
 
 <?php
 
@@ -64,9 +64,9 @@ if ( isset( $this->civi->errors ) AND is_array( $this->civi->errors ) ) {
 		foreach( $select AS $key => $value ) {
 			
 			// construct URLs for this item
-			$edit_url = $rules_url . '&q=edit&id='.$value->id;
+			$edit_url = $urls['rules'] . '&q=edit&id='.$value->id;
 			$delete_url = wp_nonce_url( 
-				$list_url . '&syncrule=delete&id='.$value->id,
+				$urls['list'] . '&syncrule=delete&id='.$value->id,
 				'civi_member_sync_delete_link',
 				'civi_member_sync_delete_nonce'
 			);

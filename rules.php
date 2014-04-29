@@ -2,7 +2,7 @@
 
 <div class="wrap">
 
-	<h2 class="nav-tab-wrapper"><a href="<?php echo $list_url; ?>" class="nav-tab nav-tab-active"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a href="<?php echo $manual_sync_url; ?>" class="nav-tab"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a></h2>
+	<h2 class="nav-tab-wrapper"><a href="<?php echo $urls['list']; ?>" class="nav-tab nav-tab-active"><?php _e( 'Association Rules', 'civi_member_sync' ); ?></a> <a href="<?php echo $urls['manual_sync']; ?>" class="nav-tab"><?php _e( 'Manual Synchronize', 'civi_member_sync' ); ?></a> <a href="<?php echo $urls['settings']; ?>" class="nav-tab"><?php _e( 'Settings', 'civi_member_sync' ); ?></a></h2>
 
 	<h3><?php 
 	
@@ -193,7 +193,7 @@
 			$submit = __( 'Add Association Rule', 'civi_member_sync' );
 		}
 		
-		?><input class="button-primary" type="submit" id="civi_member_sync_rules_submit" name="civi_member_sync_rules_submit" value="<?php echo $submit; ?>" />
+		?><p class="submit"><input class="button-primary" type="submit" id="civi_member_sync_rules_submit" name="civi_member_sync_rules_submit" value="<?php echo $submit; ?>" /></p>
 
 	</form>
 
