@@ -611,52 +611,79 @@ class Civi_Member_Sync {
 	
 		// check that we trust the source of the request
 		check_admin_referer( 'civi_member_sync_settings_action', 'civi_member_sync_nonce' );
+		//print_r( $_POST ); die();
+		
+		
+		
+		// debugging switch - if set, triggers do_debug() where we can test stuff
+		if ( isset( $_POST['civi_member_sync_settings_debug'] ) ) {
+			$settings_debug = absint( $_POST['civi_member_sync_settings_debug'] );
+			$debug = $settings_debug ? 1 : 0;
+			if ( $debug ) { $this->do_debug(); }
+			return;
+		}
+		
+		
 		
 		// login/logout sync enabled
 		if ( isset( $_POST['civi_member_sync_settings_login'] ) ) {
 			$settings_login = absint( $_POST['civi_member_sync_settings_login'] );
-			$this->setting_set( 'login', ( $settings_login ? 1 : 0 ) );
+		} else {
+			$settings_login = 0;
 		}
+		$this->setting_set( 'login', ( $settings_login ? 1 : 0 ) );
+		
+		
 		
 		// civicrm sync enabled
 		if ( isset( $_POST['civi_member_sync_settings_civicrm'] ) ) {
 			$settings_civicrm = absint( $_POST['civi_member_sync_settings_civicrm'] );
-			$this->setting_set( 'civicrm', ( $settings_civicrm ? 1 : 0 ) );
+		} else {
+			$settings_civicrm = 0;
 		}
+		$this->setting_set( 'civicrm', ( $settings_civicrm ? 1 : 0 ) );
+		
+		
+		
+		// get existing schedule
+		$existing_schedule = $this->setting_get( 'schedule' );
 		
 		// schedule sync enabled
 		if ( isset( $_POST['civi_member_sync_settings_schedule'] ) ) {
 			$settings_schedule = absint( $_POST['civi_member_sync_settings_schedule'] );
-			$this->setting_set( 'schedule', ( $settings_schedule ? 1 : 0 ) );
+		} else {
+			$settings_schedule = 0;
 		}
+		$this->setting_set( 'schedule', ( $settings_schedule ? 1 : 0 ) );
+		
+		// is the schedule being deactivated?
+		if ( $existing_schedule == 1 AND $settings_schedule === 0 ) {
+
+			// clear current scheduled event
+			$this->clear_schedule();
+			
+		}
+		
+		
 		
 		// schedule interval
 		if ( isset( $_POST['civi_member_sync_settings_interval'] ) ) {
 		
+			// get existing interval
+			$existing_interval = $this->setting_get( 'interval' );
+			
 			// get value passed in
 			$settings_interval = esc_sql( trim( $_POST['civi_member_sync_settings_interval'] ) );
 			
-			// get existing value
-			$existing = $this->setting_get( 'interval' );
+			// is the schedule active and has the interval changed?
+			if ( $settings_schedule AND $settings_interval != $existing_interval ) {
 			
-			// has it changed?
-			if ( $settings_interval != $existing ) {
+				// clear current scheduled event
+				$this->clear_schedule();
 				
-				// get next scheduled event
-				$timestamp = wp_next_scheduled( 'civi_member_sync_refresh' );
-				
-				// unschedule it if we get one
-				if ( $timestamp !== false ) {
-					wp_unschedule_event( $timestamp, 'civi_member_sync_refresh' );
-				}
-			
-				// it's not clear whether wp_unschedule_event() clears everything,
-				// so let's remove existing scheduled hook as well
-				wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
-		
 				// now add new scheduled event
 				wp_schedule_event( time(), $settings_interval, 'civi_member_sync_refresh' );
-				
+			
 			}
 			
 			// set new value whatever (for now)
@@ -675,7 +702,7 @@ class Civi_Member_Sync {
 	 * Save the plugin's settings array
 	 * @return bool $result True if setting value has changed, false if not or if update failed
 	 */
-	function settings_save() {
+	public function settings_save() {
 		
 		// update WordPress option and return result
 		return update_option( 'civi_member_sync_settings', $this->settings );
@@ -688,7 +715,7 @@ class Civi_Member_Sync {
 	 * Return a value for a specified setting
 	 * @return mixed $setting The value of the setting
 	 */
-	function setting_get( $setting_name = '', $default = false ) {
+	public function setting_get( $setting_name = '', $default = false ) {
 	
 		// sanity check
 		if ( $setting_name == '' ) {
@@ -706,7 +733,7 @@ class Civi_Member_Sync {
 	 * Set a value for a specified setting
 	 * @return nothing
 	 */
-	function setting_set( $setting_name = '', $value = '' ) {
+	public function setting_set( $setting_name = '', $value = '' ) {
 	
 		// sanity check
 		if ( $setting_name == '' ) {
@@ -715,6 +742,42 @@ class Civi_Member_Sync {
 	
 		// set setting
 		$this->settings[ $setting_name ] = $value;
+		
+	}
+	
+	
+	
+	/** 
+	 * General debugging utility
+	 * @return nothing
+	 */
+	public function do_debug() {
+		
+		// get all roles
+		$roles = $this->civi->get_wp_roles();
+		print_r( $roles ); die();
+		
+	}
+	
+	
+	
+	/** 
+	 * Clear our scheduled event
+	 * @return nothing
+	 */
+	public function clear_schedule() {
+		
+		// get next scheduled event
+		$timestamp = wp_next_scheduled( 'civi_member_sync_refresh' );
+		
+		// unschedule it if we get one
+		if ( $timestamp !== false ) {
+			wp_unschedule_event( $timestamp, 'civi_member_sync_refresh' );
+		}
+		
+		// it's not clear whether wp_unschedule_event() clears everything,
+		// so let's remove existing scheduled hook as well
+		wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
 		
 	}
 	

@@ -15,11 +15,11 @@
 
 	<p><?php _e( 'Select which methods CiviCRM Member Role Sync will use to synchronize Memberships and Roles. If you choose user login/logout, you will have to run "Manual Synchronize" after you create a new rule for it to be applied to all users and contacts. Leave the default settings if you are unsure which methods to use.', 'civi_member_sync' ); ?></p>
 	
-	<h3><?php _e( 'Synchronize Individuals', 'civi_member_sync' ); ?></h3> 
-
 	<form method="post" id="civi_member_sync_settings_form" action="<?php echo $this->get_form_url(); ?>">
 
 		<?php wp_nonce_field( 'civi_member_sync_settings_action', 'civi_member_sync_nonce' ); ?>
+
+		<h3><?php _e( 'Synchronize Individuals', 'civi_member_sync' ); ?></h3> 
 
 		<table class="form-table">
 
@@ -34,7 +34,7 @@
 						$checked = '';
 					}
 					
-					?><input type="checkbox" class="settings-login" name="civi_member_sync_settings_login" id="civi_member_sync_settings_login" value="1"<?php echo $checked; ?> />
+					?><input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_login" id="civi_member_sync_settings_login" value="1"<?php echo $checked; ?> />
 					<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_login"><?php _e( 'Synchronize whenever a user logs in or logs out. This action is performed only on the user logging in or out.', 'civi_member_sync' ); ?></label>
 				</td>
 			</tr>
@@ -50,14 +50,14 @@
 						$checked = '';
 					}
 					
-					?><input type="checkbox" class="settings-login" name="settings-login" id="settings-login" value="1"<?php echo $checked; ?> />
-					<label class="civi_member_sync_settings_label" for="settings-login"><?php _e( 'Synchronize when membership is updated in CiviCRM admin pages.', 'civi_member_sync' ); ?></label>
+					?><input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_civicrm" id="civi_member_sync_settings_civicrm" value="1"<?php echo $checked; ?> />
+					<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_civicrm"><?php _e( 'Synchronize when membership is updated in CiviCRM admin pages.', 'civi_member_sync' ); ?></label>
 				</td>
 			</tr>
 			
 		</table>
 
-	<h3><?php _e( 'Scheduled Synchronization', 'civi_member_sync' ); ?></h3> 
+		<h3><?php _e( 'Scheduled Synchronization', 'civi_member_sync' ); ?></h3> 
 
 		<table class="form-table">
 
@@ -72,15 +72,15 @@
 						$checked = '';
 					}
 					
-					?><input type="checkbox" class="settings-login" name="settings-login" id="settings-login" value="1"<?php echo $checked; ?> />
-					<label class="civi_member_sync_settings_label" for="settings-login"><?php _e( 'Synchronize using a recurring schedule. This action is performed on all users and contacts.', 'civi_member_sync' ); ?></label>
+					?><input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_schedule" id="civi_member_sync_settings_schedule" value="1"<?php echo $checked; ?> />
+					<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_schedule"><?php _e( 'Synchronize using a recurring schedule. This action is performed on all users and contacts.', 'civi_member_sync' ); ?></label>
 				</td>
 			</tr>
 			
 			<tr>
-				<th scope="row"><?php _e( 'Schedule Interval', 'civi_member_sync' ); ?></th>
+				<th scope="row"><label class="civi_member_sync_settings_label" for="civi_member_sync_settings_interval"><?php _e( 'Schedule Interval', 'civi_member_sync' ); ?></label></th>
 				<td>
-					<select name="expire_assign_wp_role" id ="expire_assign_wp_role" class ="required">
+					<select class="settings-select" name="civi_member_sync_settings_interval" id ="civi_member_sync_settings_interval">
 						<?php
 						
 						foreach( $schedules AS $key => $value ) {
@@ -96,6 +96,20 @@
 						
 						?>
 					</select>
+				</td>
+			</tr>
+			
+		</table>
+
+		<h3><?php _e( 'Debugging', 'civi_member_sync' ); ?></h3> 
+
+		<table class="form-table">
+
+			<tr>
+				<th scope="row"><?php _e( 'Debug', 'civi_member_sync' ); ?></th>
+				<td>
+					<input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_debug" id="civi_member_sync_settings_debug" value="1" />
+					<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_debug"><?php _e( 'Check this to trigger do_debug().', 'civi_member_sync' ); ?></label>
 				</td>
 			</tr>
 			

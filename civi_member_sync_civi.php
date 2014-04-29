@@ -72,7 +72,7 @@ class Civi_Member_Sync_CiviCRM {
 			$interval = $this->parent_obj->setting_get( 'interval' );
 		
 			// sanity check
-			if ( ! empty( $interval ) ) {
+			if ( ! empty( $interval ) AND $interval == 1 ) {
 		
 				// add schedule, if not already present
 				if ( ! wp_next_scheduled( 'civi_member_sync_refresh' ) ) {
