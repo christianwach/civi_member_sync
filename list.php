@@ -80,10 +80,10 @@ if ( isset( $this->civi->errors ) AND is_array( $this->civi->errors ) ) {
 						<span class="delete"><a href="<?php echo $delete_url; ?>" class="submitdelete"><?php _e( 'Delete', 'civi_member_sync' );?></a></span>
 					</div>
 				</td>
-				<td><?php echo $value->wp_role; ?></td>
+				<td><?php echo $this->get_wp_role_name( $value->wp_role ); ?></td>
 				<td><?php echo $this->civi->get_current_status_rules( $value->current_rule ); ?></td>
 				<td><?php echo $this->civi->get_current_status_rules( $value->expiry_rule );?></td>
-				<td><?php echo $value->expire_wp_role; ?></td>
+				<td><?php echo $this->get_wp_role_name( $value->expire_wp_role ); ?></td>
 			</tr>
 			<?php
 		

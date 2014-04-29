@@ -828,32 +828,33 @@ class Civi_Member_Sync {
 	
 	/**
 	 * Get WordPress user role
-	 * @param WP_User $user WP_User object of the logged-in user.
-	 * @return mixed $role WordPress user role, or an array where the user has more than one, false on failure
+	 * @param WP_User $user WP_User object
+	 * @return string $role Primary WordPress role for this user
 	 */
 	public function get_wp_role( $user ) {
 	
 		// kick out if we don't receive a valid user
 		if ( ! is_a( $user, 'WP_User' ) ) return false;
 		
-		// do we have a single roles per user?
-		if ( count( $user->roles ) === 1 ) {
+		// only build role names array once, since this is called by the sync routine
+		if ( ! isset( $this->role_names ) ) {
 		
-			// roles is still an array
-			foreach ( $user->roles AS $role ) {
-			
-				// return the first valid one
-				if ( $role ) { return $role; }
-			
-			}
-		
-		} else {
-		
-			// return the entire array
-			return $user->roles;
+			// get role names array
+			$this->role_names = $this->get_wp_role_names();
 		
 		}
 		
+		// init filtered as empty
+		$filtered_roles = array_keys( $this->role_names );
+		
+		// roles is still an array
+		foreach ( $user->roles AS $role ) {
+		
+			// return the first valid one
+			if ( $role AND in_array( $role, $filtered_roles ) ) { return $role; }
+		
+		}
+	
 		// fallback
 		return false;
 		
@@ -862,8 +863,62 @@ class Civi_Member_Sync {
 	
 		
 	/**
-	 * Get all WordPress roles
-	 * @return WP_Roles
+	 * Set WordPress user role
+	 * @param WP_User $user WP_User object of the logged-in user.
+	 * @param string $old_role Old WordPress role key
+	 * @param string $new_role New WordPress role key
+	 * @return nothing
+	 */
+	public function set_wp_role( $user, $old_role, $new_role ) {
+		
+		// kick out if we don't receive a valid user
+		if ( ! is_a( $user, 'WP_User' ) ) return;
+		
+		// sanity check params
+		if ( empty( $old_role ) ) return;
+		if ( empty( $new_role ) ) return;
+		
+		// Remove old role then add new role, so that we don't inadventently 
+		// overwrite multiple roles, for example when BBPress is active
+		
+		// remove user's existing role
+		$user->remove_role( $old_role );
+		 
+		// add new role
+		$user->add_role( $new_role );
+		 
+	}
+	
+	
+		
+	/**
+	 * Get a WordPress role name by role key
+	 * @param string $key The machine-readable name of the WP_Role
+	 * @return string $role_name The human-readable name of the WP_Role
+	 */
+	public function get_wp_role_name( $key ) {
+		
+		// only build role names array once, since this is called by the list page
+		if ( ! isset( $this->role_names ) ) {
+		
+			// get role names array
+			$this->role_names = $this->get_wp_role_names();
+		
+		}
+		
+		// get value by key
+		$role_name = isset( $this->role_names[$key] ) ? $this->role_names[$key] : false;
+		
+		// --<
+		return $role_name;
+		
+	}
+	
+	
+		
+	/**
+	 * Get all WordPress role names
+	 * @return array $role_names An array of role names, keyed by role key
 	 */
 	public function get_wp_role_names() {
 		
@@ -878,7 +933,7 @@ class Civi_Member_Sync {
 		// get names
 		$role_names = $wp_roles->get_names();
 		
-		// if we have BBPress active, filter them out
+		// if we have BBPress active, filter out its custom roles
 		if ( function_exists( 'bbp_get_blog_roles' ) ) {
 		
 			// get BBPress-filtered roles
@@ -898,6 +953,8 @@ class Civi_Member_Sync {
 			}
 			
 		}
+		
+		//print_r( $role_names ); die();
 		
 		// --<
 		return $role_names;

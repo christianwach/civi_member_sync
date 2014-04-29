@@ -403,6 +403,8 @@ class Civi_Member_Sync_CiviCRM {
 				'status_id' => $status_id,
 				'current_rule' => $current_rule,
 				'expiry_rule' => $expiry_rule,
+				'user_role' => $user_role,
+				'wp_role' => $association_rule->wp_role,
 			) ); die();
 			*/
 			
@@ -410,26 +412,26 @@ class Civi_Member_Sync_CiviCRM {
 			if ( isset( $status_id ) && array_search( $status_id, $current_rule ) ) {
 				
 				// yes - get role for current status rule
-				$wp_role = strtolower( $association_rule->wp_role );
+				$wp_role = $association_rule->wp_role;
 				
-				// does this have this role?
-				if ( $wp_role != $user_role ) {
+				// if we have one (we should) and the user has a different role...
+				if (  ! empty( $wp_role ) AND $wp_role != $user_role ) {
 					
-					// no - set user's role (but which role?)
-					$user->set_role( $wp_role );
+					// no - set new role
+					$this->parent_obj->set_wp_role( $user, $user_role, $wp_role );
 					 
 				}
 			
 			} else {
 		
 				// no - get role for expired status rule
-				$expired_wp_role = strtolower( $association_rule->expire_wp_role );
+				$expired_wp_role = $association_rule->expire_wp_role;
 				
 				// if we have one (we should) and the user has a different role...
 				if ( ! empty( $expired_wp_role ) AND $expired_wp_role != $user_role ) {
 				
-					// set user's role to the expired role
-					$user->set_role( $expired_wp_role );
+					// switch user's role to the expired role
+					$this->parent_obj->set_wp_role( $user, $user_role, $expired_wp_role );
 					
 				}
 			

@@ -78,11 +78,11 @@
 						foreach( $roles as $key => $value ) {
 						
 							$selected = '';
-							if( isset( $wp_role ) AND $value == $wp_role ) {
+							if( isset( $wp_role ) AND $key == $wp_role ) {
 								$selected = ' selected="selected"';
 							}
 							
-							?><option value="<?php echo $value; ?>"<?php echo $selected; ?>><?php echo $value; ?></option><?php
+							?><option value="<?php echo $key; ?>"<?php echo $selected; ?>><?php echo $value; ?></option><?php
 							
 						}
 					
@@ -150,11 +150,11 @@
 						foreach( $roles AS $key => $value ) {
 						
 							$selected = '';
-							if( isset( $expired_wp_role ) AND $value == $expired_wp_role ) {
+							if( isset( $wp_role ) AND $key == $wp_role ) {
 								$selected = ' selected="selected"';
 							}
 							
-							?><option value="<?php echo $value; ?>"<?php echo $selected; ?>><?php echo $value; ?></option><?php
+							?><option value="<?php echo $key; ?>"<?php echo $selected; ?>><?php echo $value; ?></option><?php
 							
 						}
 						
