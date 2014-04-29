@@ -150,7 +150,7 @@ class Civi_Member_Sync_CiviCRM {
 			if ( ! isset( $objectRef->contact_id ) ) { return; }
 		
 			// get WordPress user for this contact ID
-			$user = $this->get_wp_user( $objectRef->contact_id );
+			$user = $this->parent_obj->get_wp_user( $objectRef->contact_id );
 		
 			// kick out if we don't receive a valid user
 			if ( ! is_a( $user, 'WP_User' ) ) { return; }
@@ -160,7 +160,7 @@ class Civi_Member_Sync_CiviCRM {
 			if ( is_super_admin( $user->ID ) OR $user->has_cap( 'delete_users' ) ) { return; }
 		
 			// get primary WP role
-			$user_role = $this->get_wp_role( $user );
+			$user_role = $this->parent_obj->get_wp_role( $user );
 		
 			// reformat $objectRef as if it was an API return
 			$membership = array( 
@@ -314,7 +314,7 @@ class Civi_Member_Sync_CiviCRM {
 		if ( $civi_contact_id === false ) { return; }
 		
 		// get primary WP role
-		$user_role = $this->get_wp_role( $user );
+		$user_role = $this->parent_obj->get_wp_role( $user );
 		
 		// we *must* have that ID now...
 		$success = $this->member_check( $civi_contact_id, $user, $user_role );
@@ -865,112 +865,6 @@ class Civi_Member_Sync_CiviCRM {
 		
 		// --<
 		return $civi_contact_id;
-		
-	}
-	
-	
-	
-	/**
-	 * Get a WordPress user for a Civi contact ID
-	 * @param int $contact_id The numeric CiviCRM contact ID
-	 * @return WP_User $user WP_User object for the WordPress user
-	 */
-	public function get_wp_user( $contact_id ) {
-		
-		// kick out if no CiviCRM
-		if ( ! civi_wp()->initialize() ) return false;
-		
-		// make sure Civi file is included
-		require_once 'CRM/Core/BAO/UFMatch.php';
-			
-		// search using Civi's logic
-		$user_id = CRM_Core_BAO_UFMatch::getUFId( $contact_id );
-		
-		// get user object
-		$user = new WP_User( $user_id );
-		
-		// --<
-		return $user;
-		
-	}
-	
-	
-	
-	/**
-	 * Get WordPress user role
-	 * @param WP_User $user WP_User object of the logged-in user.
-	 * @return mixed $role WordPress user role, or an array where the user has more than one, false on failure
-	 */
-	public function get_wp_role( $user ) {
-	
-		// kick out if we don't receive a valid user
-		if ( ! is_a( $user, 'WP_User' ) ) return false;
-		
-		// do we have a single roles per user?
-		if ( count( $user->roles ) === 1 ) {
-		
-			// roles is still an array
-			foreach ( $user->roles AS $role ) {
-			
-				// return the first valid one
-				if ( $role ) { return $role; }
-			
-			}
-		
-		} else {
-		
-			// return the entire array
-			return $user->roles;
-		
-		}
-		
-		// fallback
-		return false;
-		
-	}
-	
-	
-		
-	/**
-	 * Get all WordPress roles
-	 * @return WP_Roles
-	 */
-	public function get_wp_role_names() {
-		
-		// access roles global
-		global $wp_roles;
-
-		// load roles if not set
-		if ( ! isset( $wp_roles ) ) {
-			$wp_roles = new WP_Roles();
-		}
-		
-		// get names
-		$role_names = $wp_roles->get_names();
-		
-		// if we have BBPress active, filter them out
-		if ( function_exists( 'bbp_get_blog_roles' ) ) {
-		
-			// get BBPress-filtered roles
-			$bbp_roles = bbp_get_blog_roles();
-			
-			// init roles
-			$role_names = array();
-			
-			// sanity check
-			if ( ! empty( $bbp_roles ) ) {
-				foreach( $bbp_roles AS $bbp_role => $bbp_role_data ) {
-					
-					// add to roles array
-					$role_names[$bbp_role] = $bbp_role_data['name'];
-					
-				}
-			}
-			
-		}
-		
-		// --<
-		return $role_names;
 		
 	}
 	
