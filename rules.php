@@ -51,9 +51,6 @@
 						<option value=""></option>
 						<?php
 						
-						// get all membership types
-						$membership_types = $this->civi->get_types();
-						
 						// round we go...
 						foreach( $membership_types AS $key => $value ) { 
 							
@@ -78,9 +75,6 @@
 						<option value=""></option>
 						<?php
 						
-						global $wp_roles;
-						$roles = $wp_roles->get_names();
-						
 						foreach( $roles as $key => $value ) {
 						
 							$selected = '';
@@ -101,9 +95,6 @@
 				<th scope="row"><label class="current_label" for="current"><?php _e( 'Current Status', 'civi_member_sync' ); ?> *</label></th>
 				<td>
 				<?php
-				
-				// get all membership status rules
-				$status_rules = $this->civi->get_status_rules();
 				
 				foreach( $status_rules AS $key => $value ) {
 					
@@ -155,9 +146,6 @@
 					<select name="expire_assign_wp_role" id ="expire_assign_wp_role" class ="required">
 						<option value=""></option>
 						<?php
-						
-						global $wp_roles;
-						$roles = $wp_roles->get_names();
 						
 						foreach( $roles AS $key => $value ) {
 						

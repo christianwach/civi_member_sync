@@ -444,7 +444,17 @@ class Civi_Member_Sync {
 			
 			// get admin page URLs
 			$urls = $this->get_admin_urls(); 
-
+			
+			// get all membership types
+			$membership_types = $this->civi->get_types();
+			
+			// get all membership status rules
+			$status_rules = $this->civi->get_status_rules();
+			
+			// get filtered roles
+			$roles = $this->civi->get_wp_role_names();
+			//print_r( $roles ); die();
+			
 			// do we want to populate the form?
 			if ( isset( $_GET['q'] ) AND $_GET['q'] == 'edit' ) {
 				if ( isset( $_GET['id'] ) AND is_numeric( $_GET['id'] ) ) {
@@ -835,20 +845,6 @@ class Civi_Member_Sync {
 	
 	
 	/** 
-	 * General debugging utility
-	 * @return nothing
-	 */
-	public function do_debug() {
-		
-		// get all roles
-		$roles = $this->civi->get_wp_roles();
-		print_r( $roles ); die();
-		
-	}
-	
-	
-	
-	/** 
 	 * Clear our scheduled event
 	 * @return nothing
 	 */
@@ -865,6 +861,31 @@ class Civi_Member_Sync {
 		// it's not clear whether wp_unschedule_event() clears everything,
 		// so let's remove existing scheduled hook as well
 		wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
+		
+	}
+	
+	
+	
+	/** 
+	 * General debugging utility
+	 * @return nothing
+	 */
+	public function do_debug() {
+		
+		global $wp_roles;
+		$roles = $wp_roles->get_names();
+		
+		// get all role names
+		$role_names = $this->civi->get_wp_role_names();
+		
+		print_r( array( 
+			'WP Roles' => $roles,
+			'WP Role Names' => $role_names, 
+		) ); die();
+		
+		if ( function_exists( 'bbp_get_blog_roles' ) ) {
+			$bbpress_roles = bbp_get_blog_roles();
+		}
 		
 	}
 	

@@ -407,7 +407,7 @@ class Civi_Member_Sync_CiviCRM {
 				// does this have this role?
 				if ( $wp_role != $user_role ) {
 					
-					// no - set user's role
+					// no - set user's role (but which role?)
 					$user->set_role( $wp_role );
 					 
 				}
@@ -899,19 +899,29 @@ class Civi_Member_Sync_CiviCRM {
 	/**
 	 * Get WordPress user role
 	 * @param WP_User $user WP_User object of the logged-in user.
-	 * @return string $role WordPress user role
+	 * @return mixed $role WordPress user role, or an array where the user has more than one, false on failure
 	 */
 	public function get_wp_role( $user ) {
 	
 		// kick out if we don't receive a valid user
 		if ( ! is_a( $user, 'WP_User' ) ) return false;
 		
-		// roles is an array
-		foreach ( $user->roles AS $role ) {
+		// do we have a single roles per user?
+		if ( count( $user->roles ) === 1 ) {
+		
+			// roles is still an array
+			foreach ( $user->roles AS $role ) {
 			
-			// return the first valid one (for now)
-			if ( $role ) { return $role; }
+				// return the first valid one
+				if ( $role ) { return $role; }
 			
+			}
+		
+		} else {
+		
+			// return the entire array
+			return $user->roles;
+		
 		}
 		
 		// fallback
@@ -925,7 +935,9 @@ class Civi_Member_Sync_CiviCRM {
 	 * Get all WordPress roles
 	 * @return WP_Roles
 	 */
-	public function get_wp_roles() {
+	public function get_wp_role_names() {
+		
+		// access roles global
 		global $wp_roles;
 
 		// load roles if not set
@@ -933,7 +945,33 @@ class Civi_Member_Sync_CiviCRM {
 			$wp_roles = new WP_Roles();
 		}
 		
-		return $wp_roles;
+		// get names
+		$role_names = $wp_roles->get_names();
+		
+		// if we have BBPress active, filter them out
+		if ( function_exists( 'bbp_get_blog_roles' ) ) {
+		
+			// get BBPress-filtered roles
+			$bbp_roles = bbp_get_blog_roles();
+			
+			// init roles
+			$role_names = array();
+			
+			// sanity check
+			if ( ! empty( $bbp_roles ) ) {
+				foreach( $bbp_roles AS $bbp_role => $bbp_role_data ) {
+					
+					// add to roles array
+					$role_names[$bbp_role] = $bbp_role_data['name'];
+					
+				}
+			}
+			
+		}
+		
+		// --<
+		return $role_names;
+		
 	}
 	
 	
