@@ -56,6 +56,10 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 	
+	//##########################################################################
+	
+	
+	
 	/**
 	 * Register hooks when CiviCRM initialises
 	 * @return nothing
@@ -115,6 +119,10 @@ class Civi_Member_Sync_CiviCRM {
 		}
 		
 	}
+	
+	
+	
+	//##########################################################################
 	
 	
 	
@@ -439,6 +447,10 @@ class Civi_Member_Sync_CiviCRM {
 	
 	
 	
+	//##########################################################################
+	
+	
+	
 	/**
 	 * Get a membership rule
 	 * @return bool $success True if successful, false otherwise
@@ -655,6 +667,10 @@ class Civi_Member_Sync_CiviCRM {
 		}
 		
 	}
+	
+	
+	
+	//##########################################################################
 	
 	
 	

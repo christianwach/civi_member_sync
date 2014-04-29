@@ -89,31 +89,7 @@ class Civi_Member_Sync {
 	
 	
 	
-	/** 
-	 * Load translation if present
-	 */
-	public function translation() {
-		
-		// only use, if we have it...
-		if( function_exists( 'load_plugin_textdomain' ) ) {
-		
-			// there are no translations as yet, but they can now be added
-			load_plugin_textdomain(
-			
-				// unique name
-				'civi_member_sync', 
-				
-				// deprecated argument
-				false,
-				
-				// relative path to directory containing translation files
-				dirname( plugin_basename( CIVI_MEMBER_SYNC_PLUGIN_FILE ) ) . '/languages/'
-				
-			);
-			
-		}
-		
-	}
+	//##########################################################################
 	
 	
 	
@@ -207,6 +183,38 @@ class Civi_Member_Sync {
 		
 		// broadcast that we're up and running
 		do_action( 'civi_member_sync_initialised' );
+		
+	}
+	
+	
+	
+	//##########################################################################
+	
+	
+	
+	/** 
+	 * Load translation if present
+	 */
+	public function translation() {
+		
+		// only use, if we have it...
+		if( function_exists( 'load_plugin_textdomain' ) ) {
+		
+			// there are no translations as yet, but they can now be added
+			load_plugin_textdomain(
+			
+				// unique name
+				'civi_member_sync', 
+				
+				// deprecated argument
+				false,
+				
+				// relative path to directory containing translation files
+				dirname( plugin_basename( CIVI_MEMBER_SYNC_PLUGIN_FILE ) ) . '/languages/'
+				
+			);
+			
+		}
 		
 	}
 	
@@ -405,6 +413,10 @@ class Civi_Member_Sync {
 	
 	
 	
+	//##########################################################################
+	
+	
+	
 	/** 
 	 * Show civi_member_sync_list admin page
 	 * @return nothing
@@ -541,93 +553,7 @@ class Civi_Member_Sync {
 	
 	
 		
-	/** 
-	 * Get the URL for the form action
-	 * @return string $target_url The URL for the admin form action
-	 */
-	public function get_form_url() {
-	
-		// sanitise admin page url
-		$target_url = $_SERVER['REQUEST_URI'];
-		$url_array = explode( '&', $target_url );
-		if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' ); }
-		
-		// --<
-		return $target_url;
-		
-	}
-	
-	
-	
-	/** 
-	 * Get admin page URLs
-	 * @return array $admin_urls The array of admin page URLs
-	 */
-	public function get_admin_urls() {
-		
-		// only calculate once
-		if ( isset( $this->urls ) ) { return $this->urls; }
-		
-		// init return
-		$this->urls = array();
-		
-		// multisite?
-		if ( is_multisite() ) {
-		
-			// get admin page URLs via our adapted method
-			$this->urls['list'] = $this->network_menu_page_url( 'civi_member_sync_list', false );
-			$this->urls['rules'] = $this->network_menu_page_url( 'civi_member_sync_rules', false ); 
-			$this->urls['manual_sync'] = $this->network_menu_page_url( 'civi_member_sync_manual_sync', false ); 
-			$this->urls['settings'] = $this->network_menu_page_url( 'civi_member_sync_settings', false ); 
-		
-		} else {
-		
-			// get admin page URLs
-			$this->urls['list'] = menu_page_url( 'civi_member_sync_list', false );
-			$this->urls['rules'] = menu_page_url( 'civi_member_sync_rules', false ); 
-			$this->urls['manual_sync'] = menu_page_url( 'civi_member_sync_manual_sync', false ); 
-			$this->urls['settings'] = menu_page_url( 'civi_member_sync_settings', false ); 
-		
-		}
-		
-		// --<
-		return $this->urls;
-		
-	}
-	
-	
-	
-	/**
-	 * Get the url to access a particular menu page based on the slug it was registered with.
-	 *
-	 * If the slug hasn't been registered properly no url will be returned
-	 *
-	 * @since 3.0.0
-	 *
-	 * @param string $menu_slug The slug name to refer to this menu by (should be unique for this menu)
-	 * @param bool $echo Whether or not to echo the url - default is true
-	 * @return string the url
-	 */
-	public function network_menu_page_url($menu_slug, $echo = true) {
-		global $_parent_pages;
-		
-		if ( isset( $_parent_pages[$menu_slug] ) ) {
-			$parent_slug = $_parent_pages[$menu_slug];
-			if ( $parent_slug && ! isset( $_parent_pages[$parent_slug] ) ) {
-				$url = network_admin_url( add_query_arg( 'page', $menu_slug, $parent_slug ) );
-			} else {
-				$url = network_admin_url( 'admin.php?page=' . $menu_slug );
-			}
-		} else {
-			$url = '';
-		}
-		
-		$url = esc_url($url);
-		
-		if ( $echo ) echo $url;
-		
-		return $url;
-	}
+	//##########################################################################
 	
 	
 	
@@ -844,6 +770,10 @@ class Civi_Member_Sync {
 	
 	
 	
+	//##########################################################################
+	
+	
+	
 	/** 
 	 * Clear our scheduled event
 	 * @return nothing
@@ -863,6 +793,10 @@ class Civi_Member_Sync {
 		wp_clear_scheduled_hook( 'civi_member_sync_refresh' );
 		
 	}
+	
+	
+	
+	//##########################################################################
 	
 	
 	
@@ -969,6 +903,100 @@ class Civi_Member_Sync {
 		return $role_names;
 		
 	}
+	
+	
+	
+	//##########################################################################
+	
+	
+	
+	/** 
+	 * Get the URL for the form action
+	 * @return string $target_url The URL for the admin form action
+	 */
+	public function get_form_url() {
+	
+		// sanitise admin page url
+		$target_url = $_SERVER['REQUEST_URI'];
+		$url_array = explode( '&', $target_url );
+		if ( $url_array ) { $target_url = htmlentities( $url_array[0].'&updated=true' ); }
+		
+		// --<
+		return $target_url;
+		
+	}
+	
+	
+	
+	/** 
+	 * Get admin page URLs
+	 * @return array $admin_urls The array of admin page URLs
+	 */
+	public function get_admin_urls() {
+		
+		// only calculate once
+		if ( isset( $this->urls ) ) { return $this->urls; }
+		
+		// init return
+		$this->urls = array();
+		
+		// multisite?
+		if ( is_multisite() ) {
+		
+			// get admin page URLs via our adapted method
+			$this->urls['list'] = $this->network_menu_page_url( 'civi_member_sync_list', false );
+			$this->urls['rules'] = $this->network_menu_page_url( 'civi_member_sync_rules', false ); 
+			$this->urls['manual_sync'] = $this->network_menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$this->urls['settings'] = $this->network_menu_page_url( 'civi_member_sync_settings', false ); 
+		
+		} else {
+		
+			// get admin page URLs
+			$this->urls['list'] = menu_page_url( 'civi_member_sync_list', false );
+			$this->urls['rules'] = menu_page_url( 'civi_member_sync_rules', false ); 
+			$this->urls['manual_sync'] = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$this->urls['settings'] = menu_page_url( 'civi_member_sync_settings', false ); 
+		
+		}
+		
+		// --<
+		return $this->urls;
+		
+	}
+	
+	
+	
+	/**
+	 * Get the url to access a particular menu page based on the slug it was registered with.
+	 * If the slug hasn't been registered properly no url will be returned
+	 * @param string $menu_slug The slug name to refer to this menu by (should be unique for this menu)
+	 * @param bool $echo Whether or not to echo the url - default is true
+	 * @return string the url
+	 */
+	public function network_menu_page_url($menu_slug, $echo = true) {
+		global $_parent_pages;
+		
+		if ( isset( $_parent_pages[$menu_slug] ) ) {
+			$parent_slug = $_parent_pages[$menu_slug];
+			if ( $parent_slug && ! isset( $_parent_pages[$parent_slug] ) ) {
+				$url = network_admin_url( add_query_arg( 'page', $menu_slug, $parent_slug ) );
+			} else {
+				$url = network_admin_url( 'admin.php?page=' . $menu_slug );
+			}
+		} else {
+			$url = '';
+		}
+		
+		$url = esc_url($url);
+		
+		if ( $echo ) echo $url;
+		
+		return $url;
+	}
+	
+	
+	
+	//##########################################################################
 	
 	
 	
