@@ -184,8 +184,23 @@ class Civi_Member_Sync {
 		// load settings array
 		$this->settings = get_option( 'civi_member_sync_settings', $this->settings );
 		
-		// add menu items
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) ); 
+		// is this the back end?
+		if ( is_admin() ) {
+		
+			// multisite?
+			if ( is_multisite() ) {
+	
+				// add admin page to Network menu
+				add_action( 'network_admin_menu', array( $this, 'admin_menu' ), 30 );
+			
+			} else {
+			
+				// add admin page to menu
+				add_action( 'admin_menu', array( $this, 'admin_menu' ) ); 
+			
+			}
+			
+		}
 		
 		// initialise CiviCRM object
 		$this->civi->initialise();
@@ -203,10 +218,28 @@ class Civi_Member_Sync {
 	 */
 	public function admin_menu() {
 		
-		// check user permissions
-		if ( current_user_can('manage_options') ) {
+		// we must be network admin in multisite
+		if ( is_multisite() AND !is_super_admin() ) { return false; }
 		
-			// add options page
+		// check user permissions
+		if ( !current_user_can('manage_options') ) { return false; }
+		
+		// multisite?
+		if ( is_multisite() ) {
+			
+			// add the admin page to the Network Settings menu
+			$this->list_page = add_submenu_page(
+				'settings.php', 
+				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // page title
+				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // menu title
+				'manage_options', // required caps
+				'civi_member_sync_list', // slug name
+				array( $this, 'rules_list' ) // callback
+			);
+		
+		} else {
+		
+			// add the admin page to the Settings menu
 			$this->list_page = add_options_page(
 				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // page title
 				__( 'CiviCRM Member Role Sync', 'civi_member_sync' ), // menu title
@@ -214,58 +247,58 @@ class Civi_Member_Sync {
 				'civi_member_sync_list', // slug name
 				array( $this, 'rules_list' ) // callback
 			);
-			
-			// add scripts and styles
-			add_action( 'admin_print_styles-'.$this->list_page, array( $this, 'admin_css' ) );
-			add_action( 'admin_head-'.$this->list_page, array( $this, 'admin_head' ), 50 );
-			
-			// add list page
-			$this->rules_page = add_submenu_page(
-				'civi_member_sync_list', // parent slug
-				__( 'CiviCRM Member Role Sync: Association Rules', 'civi_member_sync' ), // page title
-				__( 'Association Rules', 'civi_member_sync' ), // menu title
-				'manage_options', // required caps
-				'civi_member_sync_rules', // slug name
-				array( $this, 'rules_add_edit' ) // callback
-			);
-			
-			// add scripts and styles
-			add_action( 'admin_print_scripts-'.$this->rules_page, array( $this, 'admin_js' ) );
-			add_action( 'admin_print_styles-'.$this->rules_page, array( $this, 'admin_css' ) );
-			add_action( 'admin_head-'.$this->rules_page, array( $this, 'admin_head' ), 50 );
-			
-			// add manual sync page
-			$this->sync_page = add_submenu_page(
-				'civi_member_sync_list', // parent slug
-				__( 'CiviCRM Member Role Sync: Manual Sync', 'civi_member_sync' ), // page title
-				__( 'Manual Sync', 'civi_member_sync' ), // menu title
-				'manage_options', // required caps
-				'civi_member_sync_manual_sync', // slug name
-				array( $this, 'rules_sync' ) // callback
-			);
-			
-			// add scripts and styles
-			add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
-			add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
-			
-			// add settings page
-			$this->settings_page = add_submenu_page(
-				'civi_member_sync_list', // parent slug
-				__( 'CiviCRM Member Role Sync: Settings', 'civi_member_sync' ), // page title
-				__( 'Settings', 'civi_member_sync' ), // menu title
-				'manage_options', // required caps
-				'civi_member_sync_settings', // slug name
-				array( $this, 'rules_settings' ) // callback
-			);
-			
-			// add scripts and styles
-			add_action( 'admin_print_styles-'.$this->settings_page, array( $this, 'admin_css' ) );
-			add_action( 'admin_head-'.$this->settings_page, array( $this, 'admin_head' ), 50 );
-			
-			// try and update options
-			$saved = $this->admin_update();
-			
+		
 		}
+		
+		// add scripts and styles
+		add_action( 'admin_print_styles-'.$this->list_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_head-'.$this->list_page, array( $this, 'admin_head' ), 50 );
+		
+		// add list page
+		$this->rules_page = add_submenu_page(
+			'civi_member_sync_list', // parent slug
+			__( 'CiviCRM Member Role Sync: Association Rules', 'civi_member_sync' ), // page title
+			__( 'Association Rules', 'civi_member_sync' ), // menu title
+			'manage_options', // required caps
+			'civi_member_sync_rules', // slug name
+			array( $this, 'rules_add_edit' ) // callback
+		);
+		
+		// add scripts and styles
+		add_action( 'admin_print_scripts-'.$this->rules_page, array( $this, 'admin_js' ) );
+		add_action( 'admin_print_styles-'.$this->rules_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_head-'.$this->rules_page, array( $this, 'admin_head' ), 50 );
+		
+		// add manual sync page
+		$this->sync_page = add_submenu_page(
+			'civi_member_sync_list', // parent slug
+			__( 'CiviCRM Member Role Sync: Manual Sync', 'civi_member_sync' ), // page title
+			__( 'Manual Sync', 'civi_member_sync' ), // menu title
+			'manage_options', // required caps
+			'civi_member_sync_manual_sync', // slug name
+			array( $this, 'rules_sync' ) // callback
+		);
+		
+		// add scripts and styles
+		add_action( 'admin_print_styles-'.$this->sync_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_head-'.$this->sync_page, array( $this, 'admin_head' ), 50 );
+		
+		// add settings page
+		$this->settings_page = add_submenu_page(
+			'civi_member_sync_list', // parent slug
+			__( 'CiviCRM Member Role Sync: Settings', 'civi_member_sync' ), // page title
+			__( 'Settings', 'civi_member_sync' ), // menu title
+			'manage_options', // required caps
+			'civi_member_sync_settings', // slug name
+			array( $this, 'rules_settings' ) // callback
+		);
+		
+		// add scripts and styles
+		add_action( 'admin_print_styles-'.$this->settings_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_head-'.$this->settings_page, array( $this, 'admin_head' ), 50 );
+		
+		// try and update options
+		$saved = $this->admin_update();
 		
 	}
 	
@@ -528,15 +561,62 @@ class Civi_Member_Sync {
 		// init return
 		$this->urls = array();
 		
-		// get admin page URLs
-		$this->urls['list'] = menu_page_url( 'civi_member_sync_list', false );
-		$this->urls['rules'] = menu_page_url( 'civi_member_sync_rules', false ); 
-		$this->urls['manual_sync'] = menu_page_url( 'civi_member_sync_manual_sync', false ); 
-		$this->urls['settings'] = menu_page_url( 'civi_member_sync_settings', false ); 
+		// multisite?
+		if ( is_multisite() ) {
+		
+			// get admin page URLs via our adapted method
+			$this->urls['list'] = $this->network_menu_page_url( 'civi_member_sync_list', false );
+			$this->urls['rules'] = $this->network_menu_page_url( 'civi_member_sync_rules', false ); 
+			$this->urls['manual_sync'] = $this->network_menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$this->urls['settings'] = $this->network_menu_page_url( 'civi_member_sync_settings', false ); 
+		
+		} else {
+		
+			// get admin page URLs
+			$this->urls['list'] = menu_page_url( 'civi_member_sync_list', false );
+			$this->urls['rules'] = menu_page_url( 'civi_member_sync_rules', false ); 
+			$this->urls['manual_sync'] = menu_page_url( 'civi_member_sync_manual_sync', false ); 
+			$this->urls['settings'] = menu_page_url( 'civi_member_sync_settings', false ); 
+		
+		}
 		
 		// --<
 		return $this->urls;
 		
+	}
+	
+	
+	
+	/**
+	 * Get the url to access a particular menu page based on the slug it was registered with.
+	 *
+	 * If the slug hasn't been registered properly no url will be returned
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $menu_slug The slug name to refer to this menu by (should be unique for this menu)
+	 * @param bool $echo Whether or not to echo the url - default is true
+	 * @return string the url
+	 */
+	function network_menu_page_url($menu_slug, $echo = true) {
+		global $_parent_pages;
+		
+		if ( isset( $_parent_pages[$menu_slug] ) ) {
+			$parent_slug = $_parent_pages[$menu_slug];
+			if ( $parent_slug && ! isset( $_parent_pages[$parent_slug] ) ) {
+				$url = network_admin_url( add_query_arg( 'page', $menu_slug, $parent_slug ) );
+			} else {
+				$url = network_admin_url( 'admin.php?page=' . $menu_slug );
+			}
+		} else {
+			$url = '';
+		}
+		
+		$url = esc_url($url);
+		
+		if ( $echo ) echo $url;
+		
+		return $url;
 	}
 	
 	
@@ -615,8 +695,8 @@ class Civi_Member_Sync {
 		
 		
 		
-		// debugging switch - if set, triggers do_debug() where we can test stuff
-		if ( isset( $_POST['civi_member_sync_settings_debug'] ) ) {
+		// debugging switch for admins and network admins - if set, triggers do_debug() below
+		if ( is_super_admin() AND isset( $_POST['civi_member_sync_settings_debug'] ) ) {
 			$settings_debug = absint( $_POST['civi_member_sync_settings_debug'] );
 			$debug = $settings_debug ? 1 : 0;
 			if ( $debug ) { $this->do_debug(); }

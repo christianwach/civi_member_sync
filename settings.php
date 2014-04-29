@@ -100,20 +100,24 @@
 			</tr>
 			
 		</table>
+		
+		<?php if ( is_super_admin() ) { ?>
+		
+			<h3><?php _e( 'Debugging', 'civi_member_sync' ); ?></h3> 
 
-		<h3><?php _e( 'Debugging', 'civi_member_sync' ); ?></h3> 
+			<table class="form-table">
 
-		<table class="form-table">
-
-			<tr>
-				<th scope="row"><?php _e( 'Debug', 'civi_member_sync' ); ?></th>
-				<td>
-					<input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_debug" id="civi_member_sync_settings_debug" value="1" />
-					<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_debug"><?php _e( 'Check this to trigger do_debug().', 'civi_member_sync' ); ?></label>
-				</td>
-			</tr>
+				<tr>
+					<th scope="row"><?php _e( 'Debug', 'civi_member_sync' ); ?></th>
+					<td>
+						<input type="checkbox" class="settings-checkbox" name="civi_member_sync_settings_debug" id="civi_member_sync_settings_debug" value="1" />
+						<label class="civi_member_sync_settings_label" for="civi_member_sync_settings_debug"><?php _e( 'Check this to trigger do_debug().', 'civi_member_sync' ); ?></label>
+					</td>
+				</tr>
 			
-		</table>
+			</table>
+		
+		<?php } ?>
 
 		<p class="submit">
 			<input class="button-primary" type="submit" id="civi_member_sync_settings_submit" name="civi_member_sync_settings_submit" value="<?php _e( 'Save Changes', 'civi_member_sync' ); ?>" />
