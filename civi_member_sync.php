@@ -598,7 +598,7 @@ class Civi_Member_Sync {
 	 * @param bool $echo Whether or not to echo the url - default is true
 	 * @return string the url
 	 */
-	function network_menu_page_url($menu_slug, $echo = true) {
+	public function network_menu_page_url($menu_slug, $echo = true) {
 		global $_parent_pages;
 		
 		if ( isset( $_parent_pages[$menu_slug] ) ) {
@@ -774,6 +774,13 @@ class Civi_Member_Sync {
 		// save settings
 		$this->settings_save();
 		
+		// get admin URLs
+		$urls = $this->get_admin_urls();
+		
+		// redirect to settings page with message
+		wp_redirect( $urls['settings'] . '&updated=true' );
+		die();
+		
 	}
 	
 	
@@ -894,8 +901,19 @@ register_deactivation_hook( __FILE__, array( $civi_member_sync, 'deactivate' ) )
  * @return array $links The list of plugin links
  */
 function civi_member_sync_plugin_add_settings_link( $links ) {
-	$links[] = '<a href="admin.php?page=civi_member_sync_list">' . __( 'Settings', 'civi_member_sync' ) . '</a>';
+	
+	// access plugin
+	global $civi_member_sync;
+	
+	// get admin URLs
+	$urls = $civi_member_sync->get_admin_urls();
+	
+	// add courtesy link
+	$links[] = '<a href="' . $urls['settings'] . '">' . __( 'Settings', 'civi_member_sync' ) . '</a>';
+	
+	// --<
 	return $links;
+	
 }
 
 // contstriuct filter

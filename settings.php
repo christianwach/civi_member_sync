@@ -103,7 +103,7 @@
 		
 		<?php if ( is_super_admin() ) { ?>
 		
-			<h3><?php _e( 'Debugging', 'civi_member_sync' ); ?></h3> 
+			<h3><?php _e( 'Developer Testing', 'civi_member_sync' ); ?></h3> 
 
 			<table class="form-table">
 

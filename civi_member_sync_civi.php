@@ -131,14 +131,14 @@ class Civi_Member_Sync_CiviCRM {
 		// target our object type
 		if ( $objectName != 'Membership' ) { return; }
 		
-		///*
+		/*
 		print_r( array( 
 			'op' => $op,
 			'objectName' => $objectName,
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		)); die();
-		//*/
+		*/
 		
 		// catch create and edit operations
 		if ( $op == 'edit' OR $op == 'create' ) {
@@ -585,8 +585,11 @@ class Civi_Member_Sync_CiviCRM {
 				$mode = 'edit';
 			}
 			
+			// get admin URLs
+			$urls = $this->parent_obj->get_admin_urls();
+			
 			// redirect to list page
-			wp_redirect( menu_page_url( 'civi_member_sync_list', false ) . '&syncrule=' . $mode );
+			wp_redirect( $urls['list'] . '&syncrule=' . $mode );
 			die();
 			
 		} else {
@@ -634,8 +637,11 @@ class Civi_Member_Sync_CiviCRM {
 		// do query
 		if ( $wpdb->query( $sql ) ) {
 			
+			// get admin URLs
+			$urls = $this->parent_obj->get_admin_urls();
+			
 			// redirect to list page with message
-			wp_redirect( menu_page_url( 'civi_member_sync_list', false ) . '&syncrule=delete' );
+			wp_redirect( $urls['list'] . '&syncrule=delete' );
 			die();
 			
 		} else {
@@ -919,7 +925,7 @@ class Civi_Member_Sync_CiviCRM {
 	 * Get all WordPress roles
 	 * @return WP_Roles
 	 */
-	function get_wp_roles() {
+	public function get_wp_roles() {
 		global $wp_roles;
 
 		// load roles if not set
